@@ -1,0 +1,354 @@
+﻿using Appalachia.Data;
+using Appalachia.Services;
+using Appalachia.Utility;
+using Appalachia.Utility.Extensions;
+using Discord;
+using Discord.Commands;
+using Discord.Rest;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Appalachia
+{
+	class Program
+	{
+		private const string Source = "Main";
+
+		public static DiscordSocketClient Client;
+		public const string Version = "2.0.0-dev"; // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
+
+		public static readonly BotConfig Config = new BotConfig();
+
+		static void Main() => new Program().StartAsync().GetAwaiter().GetResult();
+
+		public async Task StartAsync()
+		{
+			// should i prompt for this instead of just returning? eh. probably -jolk 2022-01-09
+			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
+			{
+				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json", "Startup");
+				Stop();
+			}
+			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == String.Empty)
+			{
+				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json", "Startup");
+				Stop();
+			}
+
+			using ServiceProvider services = ConfigureServices();
+
+			await LogAsync($"Starting Appalachia v{Version}", "Startup");
+			Client = services.GetRequiredService<DiscordSocketClient>();
+			Client.Log += LogAsync;
+			Client.Ready += OnReadyAsync;
+			Client.JoinedGuild += OnServerJoinAsync;
+			Client.ReactionAdded += OnReactAsync;
+
+			services.GetRequiredService<CommandService>().Log += LogAsync;
+			await Client.LoginAsync(TokenType.Bot, Config.Settings.Token);
+			await Client.StartAsync();
+			await services.GetRequiredService<CommandHandler>().InitializeAsync();
+
+			await Task.Delay(-1);
+		}
+
+		private async Task OnReactAsync(Cacheable<IUserMessage, ulong> messageArg, Cacheable<IMessageChannel, ulong> channelArg, SocketReaction reaction)
+		{
+			if (reaction.User.Value.IsBot)
+				return;
+
+			Task _; // i mean technically i shouldnt be doing this i think? but w/e
+			ReactionStatus status = reaction.GetStatus();
+			if ((status & ReactionStatus.RpsConfirmations) != 0)
+			{
+				IMessageChannel channel = await channelArg.DownloadAsync();
+
+				RpsChallenge challenge = Util.Rps.GetChallenge(reaction.MessageId);
+				// so like. doing this async kinda broke stuff before. but i think that was just because i was storing the challenge *after* reacting? we should be fine now?
+				// like you'd have to be the faster mfer ever to hit a react before the challenge gets stored. so i think its probably fine -jolk 2022-01-08
+				if (reaction.UserId == challenge?.PlayerIds.Opponent)
+					_ = HandleRpsConfirmationAsync(challenge, status, channel, reaction);
+			}
+			else if ((status & ReactionStatus.RpsSelections) != 0)
+			{// im learning how to actually write ansync code in like the very middle of Appalachia 2.0 oh god -jolk 2022-01-11
+				Task<IMessageChannel> channelTask = channelArg.DownloadAsync();
+				IUserMessage message = await messageArg.DownloadAsync();
+
+				RpsGame game = Util.Rps.GetActiveGame(message.Embeds.FirstOrDefault().ParseGameId());
+				// more async babyyy -jolk 2022-01-09
+				// im actuallly worried about this one. theres a real chance that something goes terribly wrong trying to run this asynchronously. im sure its fine -jolk 2022-01-09
+				if (game != null && game.PlayerIds.Contains(reaction.UserId))
+					_ = HandleRpsSelectionAsync(game, status, await channelTask, reaction);
+			}
+		}
+		private static async Task HandleRpsConfirmationAsync(RpsChallenge challenge, ReactionStatus status, IMessageChannel rawChannel, SocketReaction reaction)
+		{
+			if (rawChannel is not SocketTextChannel channel) // in practice this should never happen? but like. just in case -jolk 2022-01-10
+				return;
+
+			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]", Source);
+
+			SocketGuildUser challenger = channel.Guild.GetUser(challenge.PlayerIds.Challenger);
+			SocketGuildUser opponent = channel.Guild.GetUser(challenge.PlayerIds.Opponent);
+
+			EmbedBuilder embed = new EmbedBuilder().WithColor(Util.Servers.GetColorOrDefault(channel.Guild.Id));
+			bool accepted = false;
+			switch (status)
+			{
+				case ReactionStatus.RpsAccept:
+					embed.WithTitle("Challenge accepeted!")
+						.WithDescription($"{opponent.Mention} has accepted {challenger.Mention}\'s challenge!");
+					accepted = true;
+					break;
+
+				case ReactionStatus.RpsDeny:
+					embed.WithTitle("Challenge declined!")
+						.WithDescription($"{opponent.Mention} has declined {challenger.Mention}\'s challenge!");
+					break;
+
+				default:
+					embed = EmbedHelper.GenerateErrorEmbed("This isn\'t supposed to happen.\nIf you see this something has gone terribly wrong.");
+					await LogAsync("If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation", Source);
+					break;
+			}
+
+			await rawChannel.SendMessageAsync("", false, embed.Build());
+			Task _;
+			if (accepted)
+				_ = Task.Run(() => SendPvpSelectionMessages(challenger, opponent, challenge));
+
+			Util.Rps.RemoveChallenge(reaction.MessageId);
+		}
+		private static async Task HandleRpsSelectionAsync(RpsGame gameData, ReactionStatus status, IMessageChannel downloadedChannel, SocketReaction reaction)
+		{
+			// im wondering if i should like. take a break to clear my brain. ive been staring at vs for too long. im starting to feel the brainpower leaving my soul
+			// and like. i really *shouldnt* write this method in particular in this state. yea im gonna take a break -jolk 2022-01-09 (01:49)
+
+			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]", Source);
+
+			bool isBotMatch = gameData.PlayerIds.Contains(Client.CurrentUser.Id);
+			bool userIsChallenger = reaction.UserId == gameData.PlayerIds.Challenger;
+			if ((userIsChallenger ? gameData.Selections.Challenger : gameData.Selections.Opponent) != RpsSelection.None)
+				// sorry future me. i know parsing this will be a bit annoying. it's the "player hasnt already reacted" check. trust -jolk 2022-01-09
+				return;
+
+			if (userIsChallenger)
+			{
+				RpsSelection userSelection = status.GetUserSelection();
+
+				Util.Rps.SetChallengerSelection(gameData.MatchId, userSelection);
+				await LogAsync($"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})", Source);
+			}
+			else
+			{
+				RpsSelection userSelection = status.GetUserSelection();
+
+				Util.Rps.SetOpponentSelection(gameData.MatchId, userSelection);
+				await LogAsync($"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})", Source);
+			}
+
+			// i cant. see above comment. i need to rest my brain. ill do the rest later -jolk 2022-01-09
+			// time to game -jolk 2022-01-09 (15:30)
+
+			if (!gameData.Selections.Contains(RpsSelection.None))
+			{
+				SocketGuild guild = Client.GetGuild(gameData.GuildChannelIds.Guild);
+				SocketTextChannel channel = guild.GetTextChannel(gameData.GuildChannelIds.Channel);
+				SocketGuildUser challenger = guild.GetUser(gameData.PlayerIds.Challenger), opponent = guild.GetUser(gameData.PlayerIds.Opponent);
+
+				RpsWinner roundWinner = gameData.Selections.RpsLogic();
+
+				// determine winner of match
+				RpsWinner matchWinner = RpsWinner.Undecided;
+				switch (roundWinner)
+				{
+					case RpsWinner.Challenger:
+						if (Util.Rps.IncrementChallengerScore(gameData.MatchId) >= gameData.FirstToScore)
+							matchWinner = RpsWinner.Challenger;
+						break;
+
+					case RpsWinner.Opponent:
+						if (Util.Rps.IncrementOpponentScore(gameData.MatchId) >= gameData.FirstToScore)
+							matchWinner = RpsWinner.Opponent;
+						break;
+
+					default:
+						break;
+				}
+
+				await channel.SendMessageAsync("", false, GenerateRoundResultEmbed(gameData, challenger, opponent, roundWinner).Build());
+
+				// send match winner if determined
+				// TODO: update leaderboards once they're working -jolk 2022-01-10
+				Util.Rps.IncrementRound(gameData.MatchId);
+				switch (matchWinner)
+				{
+					case RpsWinner.Challenger:
+						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, challenger).Build());
+						Util.Rps.RemoveGame(gameData.MatchId);
+						break;
+
+					case RpsWinner.Opponent:
+						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, opponent).Build());
+						Util.Rps.RemoveGame(gameData.MatchId);
+						break;
+
+					default:
+						Util.Rps.ResetSelections(gameData.MatchId, isBotMatch);
+						if (!isBotMatch)
+							SendPvpSelectionMessages(challenger, opponent, gameData);
+						else
+						{
+							await LogAsync($"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]", Source);
+							Task _ = (await SendBotSelectionMessage(channel, challenger, gameData)).AddRpsReactionsAsync();
+						}
+						break;
+				}
+			}
+		}
+
+		private static void SendPvpSelectionMessages(SocketGuildUser challenger, SocketGuildUser opponent, RpsChallenge challenge)
+		{// ive just made this method that supposed to be async just kinda like. not lol -jolk 2022-01-13
+			if (challenge is not RpsGame gameData)
+			{
+				gameData = new RpsGame(challenge);
+				Util.Rps.AddGame(gameData.MatchId, gameData);
+			}
+
+			IUserMessage challengerMessage = null;
+			IUserMessage opponentMessage = null;
+
+
+			Task[] tasks = new Task[]
+			{
+					Task.Run(async () =>
+					{ 
+						challengerMessage = await challenger.SendMessageAsync("[Please wait...]");
+						Task _ =  challengerMessage.AddRpsReactionsAsync();
+					}),
+					Task.Run(async () =>
+					{
+						opponentMessage = await opponent.SendMessageAsync("[Please wait...]");
+						Task _ = opponentMessage.AddRpsReactionsAsync();
+					})
+			};
+			Task.WaitAll(tasks); // after a bit of testing, it seems like doing this actually asynchronously is like. a decent amount faster. go figure -jolk 2022-01-08
+
+			// should i do this in parallel? yea fuck it why not? -jolk 2022-01-08
+			Parallel.Invoke(
+				async () => await challengerMessage.ModifyAsync(msg =>
+				{
+					msg.Content = "";
+					msg.Embed = GenerateSelectionMessageEmbed(gameData, opponent).Build();
+				}),
+				async () => await opponentMessage.ModifyAsync(msg =>
+				{
+					msg.Content = "";
+					msg.Embed = GenerateSelectionMessageEmbed(gameData, challenger).Build();
+				}));
+		}
+		public static async Task<RestUserMessage> SendBotSelectionMessage(ISocketMessageChannel channel, IUser challenger, RpsGame gameData)
+		{
+			return await channel.SendMessageAsync("", false, new EmbedBuilder().WithTitle($"Round {gameData.RoundCount} vs {challenger.Username}")
+																	  .WithDescription($"{challenger.Mention}, select rock, paper, or scissors")
+																	  .WithColor(gameData.MatchId)
+																	  .WithThumbnailUrl(challenger.GetGuildOrDefaultAvatarUrl())
+																	  .WithFooter($"Match ID: #{gameData.MatchId:x6}")
+																	  .Build());
+		}
+
+		private static EmbedBuilder GenerateMatchResultEmbed(RpsGame gameData, SocketGuildUser winner)
+		{
+			return new EmbedBuilder().WithTitle("Game, Set, and Match!")
+					  .WithDescription($"{winner.Mention} wins the set!")
+					  .WithColor(gameData.MatchId)
+					  .WithThumbnailUrl(winner.GetGuildOrDefaultAvatarUrl())
+					  .WithFooter($"Match ID: #{gameData.MatchId:x6}");
+		}
+		private static EmbedBuilder GenerateRoundResultEmbed(RpsGame gameData, SocketGuildUser challenger, SocketGuildUser opponent, RpsWinner winner)
+		{
+			SocketGuildUser winningUser = winner switch
+			{
+				RpsWinner.Challenger => challenger,
+				RpsWinner.Opponent => opponent,
+				_ => null
+			};
+
+			return new EmbedBuilder()
+						.WithTitle($"Round {gameData.RoundCount}!")
+						.WithDescription($"{GenerateUserSelectionString(challenger, gameData.Selections.Challenger)}\n" +
+										 $"{GenerateUserSelectionString(opponent, gameData.Selections.Opponent)}\n\n" +
+										 $"Round {gameData.RoundCount} winner: {winningUser?.Mention ?? "Draw"}\n" +
+										 $"Score: `{gameData.Scores.Challenger} - {gameData.Scores.Opponent}`")
+						.WithColor(gameData.MatchId)
+						.WithThumbnailUrl(winningUser.GetGuildOrDefaultAvatarUrl())
+						.WithFooter($"Match ID: #{gameData.MatchId:x6}");
+		}
+		private static EmbedBuilder GenerateSelectionMessageEmbed(RpsGame gameData, IUser opponent)
+		{
+			return new EmbedBuilder().WithTitle($"Round {gameData.RoundCount} vs {opponent.Username}")
+				.WithDescription("Select rock, paper, or scissors")
+				.WithColor(gameData.MatchId)
+				.WithThumbnailUrl(opponent.GetAvatarUrl())
+				.WithFooter($"Match ID: #{gameData.MatchId:x6}");
+		}
+
+		private static string GenerateUserSelectionString(SocketGuildUser user, RpsSelection selection)
+		{
+			return $"{user.Mention} chose {selection} ({selection.ToEmote()})";
+		}
+
+		private async Task OnReadyAsync()
+		{
+			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
+			foreach (SocketGuild guild in Client.Guilds)
+			{
+				await LogAsync($"Connected to {guild.Name} ({guild.Id})", "Startup");
+				Util.Servers.AddServer(guild.Id);
+				await guild.DownloadUsersAsync();
+			}
+
+			await LogAsync($"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!", "Startup");
+		}
+		private async Task OnServerJoinAsync(SocketGuild guild)
+		{
+			await LogAsync($"Joined {guild.Name} ({guild.Id})", "ServerJoin");
+			Util.Servers.AddServer(guild.Id);
+			await guild.DownloadUsersAsync();
+		}
+
+		private static Task LogAsync(LogMessage log)
+		{
+			string write = $"[{log.Severity}] {log.ToString()}";
+			Console.WriteLine(write);
+			if (Config.Settings.OutputLogsToFile)
+				Logger.LogToFile(write);
+			return Task.CompletedTask;
+		}
+		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
+		{
+			return LogAsync(new LogMessage(severity, source, message));
+		}
+
+		public static void Stop()
+		{
+			if (Config.Settings.OutputLogsToFile)
+				Logger.Close();
+			Environment.Exit(Environment.ExitCode);
+		}
+
+
+
+		private static ServiceProvider ConfigureServices()
+		{
+			return new ServiceCollection()
+				.AddSingleton<DiscordSocketClient>(new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All }))
+				.AddSingleton<CommandService>()
+				.AddSingleton<CommandHandler>()
+				.BuildServiceProvider();
+		}
+	}
+}
