@@ -1,5 +1,6 @@
 ﻿using Appalachia.Data;
 using Appalachia.Utility;
+using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
 using System.Threading.Tasks;
@@ -33,6 +34,10 @@ namespace Appalachia.Modules
 			Program.Stop();
 		}
 
+
+
+		// do i really need either of these commands? i doubt it -jolk 2022-02-15
+
 		[Command("rpsclear"), Name(Source + "/RpsClear")]
 		public async Task RpsClear()
 		{
@@ -42,7 +47,7 @@ namespace Appalachia.Modules
 		[Command("quoteclear")]
 		public async Task QuoteClear()
 		{
-			Util.Servers.SetQuoteChannelId(Context.Guild.Id, 0);
+			Context.Guild.SetQuoteChannel(null);
 			await Context.Channel.SendMessageAsync("Quotes channel unset!");
 		}
 	}

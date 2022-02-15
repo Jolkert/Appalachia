@@ -19,7 +19,7 @@ namespace Appalachia.Modules
 		[Command("announce"), Alias("ann"), Name(Source + "/Announce")]
 		public async Task Announce([Remainder] string message)
 		{
-			await Context.Guild.GetTextChannel(Util.Servers.GetAnnouncementChannelId(Context.Guild.Id)).SendMessageAsync(message);
+			await Context.Guild.GetQuoteChannel().SendMessageAsync(message);
 		}
 
 		[Group("modify"), Alias("mod", "set", "edit", "change"), Name(AdminModule.Source + "/" + Source)]
@@ -111,7 +111,7 @@ namespace Appalachia.Modules
 				EmbedBuilder embed = new EmbedBuilder()
 					.WithColor(newColor)
 					.WithThumbnailUrl(Context.Guild.IconUrl);
-				switch (Util.Servers.SetColor(Context.Guild.Id, newColor))
+				switch (Context.Guild.SetColor(newColor))
 				{
 					case ServerData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")
@@ -152,10 +152,10 @@ namespace Appalachia.Modules
 
 
 				EmbedBuilder embed = new EmbedBuilder()
-					.WithColor(Util.Servers.GetColorOrDefault(Context.Guild.Id))
+					.WithColor(Context.Guild.GetColor())
 					.WithThumbnailUrl(Context.Guild.IconUrl);
 
-				switch (Util.Servers.SetAnnouncementChannelId(Context.Guild.Id, channel.Id))
+				switch (Context.Guild.SetAnnouncementChannel(channel))
 				{
 					case ServerData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")
@@ -194,10 +194,10 @@ namespace Appalachia.Modules
 				}
 
 				EmbedBuilder embed = new EmbedBuilder()
-					.WithColor(Util.Servers.GetColorOrDefault(Context.Guild.Id))
+					.WithColor(Context.Guild.GetColor())
 					.WithThumbnailUrl(Context.Guild.IconUrl);
 
-				switch (Util.Servers.SetQuoteChannelId(Context.Guild.Id, channel.Id))
+				switch (Context.Guild.SetQuoteChannel(channel))
 				{
 					case ServerData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")

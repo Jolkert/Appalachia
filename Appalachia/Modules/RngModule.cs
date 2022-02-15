@@ -23,7 +23,7 @@ namespace Appalachia.Modules
 			EmbedBuilder embed = new EmbedBuilder()
 				.WithTitle("RNGesus says:")
 				.WithDescription($"{Context.User.Mention}\'s coin landed on **{(Rand.Next(2) == 0 ? "heads" : "tails")}**")
-				.WithColor(Util.Servers.GetColorOrDefault(Context.Guild?.Id));
+				.WithColor(Context.Guild.GetColor());
 
 			await Context.Channel.SendMessageAsync("", false, embed.Build());
 		}
@@ -51,7 +51,7 @@ namespace Appalachia.Modules
 			EmbedBuilder embed = new EmbedBuilder()
 				.WithTitle("RNGesus says:")
 				.WithDescription($"I have chosen\n{selectedUser.Mention}")
-				.WithColor(Util.Servers.GetColorOrDefault(Context.Guild.Id))
+				.WithColor(Context.Guild.GetColor())
 				.WithThumbnailUrl(selectedUser.GetGuildOrDefaultAvatarUrl());
 
 			await Context.Channel.SendMessageAsync("", false, embed.Build());

@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static Appalachia.Data.ServerData;
 
 namespace Appalachia.Utility.Extensions
 {
@@ -111,6 +112,79 @@ namespace Appalachia.Utility.Extensions
 			await message.AddReactionAsync(Reactions.RpsRock);
 			await message.AddReactionAsync(Reactions.RpsPaper);
 			await message.AddReactionAsync(Reactions.RpsScissors);
+		}
+
+		public static string ToOrdinal(this int cardinal)
+		{// is this readable? i mean its a bit wack, but it isnt too bad i guess. i'll leave it -jolk 2022-02-14
+			return cardinal + (cardinal % 100) switch
+			{
+				11 or 12 or 13 => "th",
+				_ => (cardinal % 10) switch
+				{
+					1 => "st",
+					2 => "nd",
+					3 => "rd",
+					_ => "th",
+				}
+			};
+		}
+
+		// Server Data Extensions - please always use these instead of ever calling instance methods of Util.Servers thanks -jolk 2022-02-15
+
+		// Accessors
+		public static SocketTextChannel GetQuoteChannel(this SocketGuild guild)
+		{
+			return guild.GetTextChannel(Util.Servers.GetQuoteChannelId(guild.Id));
+		}
+		public static SocketTextChannel GetAnnouncementChannel(this SocketGuild guild)
+		{
+			return guild.GetTextChannel(Util.Servers.GetAnnouncementChannelId(guild.Id));
+		}
+		public static uint GetColor(this SocketGuild guild)
+		{
+			return Util.Servers.GetColorOrDefault(guild.Id);
+		}
+		public static IEnumerable<KeyValuePair<ulong, Server.Score>> GetRpsLeaderBoard(this SocketGuild guild)
+		{
+			return Util.Servers.GetSortedRpsLeaderboard(guild.Id);
+		}
+		public static Server.Score GetGuildRpsScore(this SocketGuildUser user)
+		{
+			return Util.Servers.GetUserScore(user.Guild.Id, user.Id);
+		}
+		public static int GetGuildRpsRank(this SocketGuildUser user)
+		{
+			return Util.Servers.GetUserRank(user.Guild.Id, user.Id);
+		}
+
+		// Modifiers
+		public static ModificationResult SetQuoteChannel(this SocketGuild guild, SocketTextChannel channel)
+		{
+			return Util.Servers.SetQuoteChannelId(guild.Id, channel?.Id ?? 0);
+		}
+		public static ModificationResult SetAnnouncementChannel(this SocketGuild guild, SocketTextChannel channel)
+		{
+			return Util.Servers.SetAnnouncementChannelId(guild.Id, channel?.Id ?? 0);
+		}
+		public static ModificationResult SetColor(this SocketGuild guild, uint color)
+		{
+			return Util.Servers.SetColor(guild.Id, color);
+		}
+
+		public static bool IncrementRpsWins(this SocketGuildUser user)
+		{
+			if (user.Guild.Id != 390334803972587530) // TODO: make this not hardcoded lol (its the ID for the testing lab) -jolk 2022-02-15
+			{
+				// TODO: increment on the global leaderboard once i have that going -jolk 2022-02-15
+			}
+
+			return Util.Servers.IncrementRpsWins(user.Guild.Id, user.Id);
+		}
+		public static bool IncrementRpsLosses(this SocketGuildUser user)
+		{// see comments on IncrementRpsWins
+			if (user.Guild.Id != 390334803972587530) {}
+
+			return Util.Servers.IncrementRpsLosses(user.Guild.Id, user.Id);
 		}
 	}
 }

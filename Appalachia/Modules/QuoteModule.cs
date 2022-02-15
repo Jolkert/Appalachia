@@ -21,19 +21,19 @@ namespace Appalachia.Modules
 		{
 			EmbedBuilder embed;
 
-			ulong quoteChannelId = Util.Servers.GetQuoteChannelId(Context.Guild.Id);
-			if (quoteChannelId == 0)
+			SocketTextChannel quoteChannel = Context.Guild.GetQuoteChannel();
+			if (quoteChannel == null)
 				embed = await GetNotSpecifiedEmbed();
 			else
 			{
-				List<IMessage> quotes = await GetQuotes(quoteChannelId, userFilter);
+				List<IMessage> quotes = await GetQuotes(quoteChannel, userFilter);
 
 				IMessage selectedQuote = quotes[Util.Rand.Next(quotes.Count)];
 				SocketGuildUser quotee = Context.Guild.GetUser(selectedQuote.MentionedUserIds.FirstOrDefault());
 
 				embed = new EmbedBuilder().WithTitle("Here's a thing someone said!")
 							  .WithDescription(selectedQuote.Content)
-							  .WithColor(Util.Servers.GetColorOrDefault(Context.Guild.Id))
+							  .WithColor(Context.Guild.GetColor())
 							  .WithThumbnailUrl(quotee?.GetGuildOrDefaultAvatarUrl())
 							  .WithUrl($"{selectedQuote.GetJumpUrl()}")
 							  .WithTimestamp(selectedQuote.Timestamp);
@@ -45,16 +45,16 @@ namespace Appalachia.Modules
 		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
 		public async Task QuoteLeaderboard(SocketGuildUser userFilter = null, [Remainder] string _ = "")
 		{
-			EmbedBuilder embed = new EmbedBuilder().WithColor(Util.Servers.GetColorOrDefault(Context.Guild.Id));
+			EmbedBuilder embed = new EmbedBuilder().WithColor(Context.Guild.GetColor());
 
-			ulong quoteChannelId = Util.Servers.GetQuoteChannelId(Context.Guild.Id);
-			if (quoteChannelId == 0)
+			SocketTextChannel quoteChannel = Context.Guild.GetQuoteChannel();
+			if (quoteChannel == null)
 				embed = await GetNotSpecifiedEmbed();
 			else
 			{
 				embed.WithTitle("Quote Stats");
 
-				List<IMessage> quotes = await GetQuotes(quoteChannelId);
+				List<IMessage> quotes = await GetQuotes(quoteChannel);
 				if (userFilter == null)
 				{
 					Dictionary<ulong, int> scoresByUser = new Dictionary<ulong, int>();
@@ -95,7 +95,7 @@ namespace Appalachia.Modules
 		[Command("help"), Alias("?"), Name(Source + "/Help")]
 		public async Task HelpCommand()
 		{
-			SocketTextChannel quotesChannel = Context.Guild.GetTextChannel(Util.Servers.GetQuoteChannelId(Context.Guild.Id));
+			SocketTextChannel quotesChannel = Context.Guild.GetQuoteChannel();
 			string description = $"Pulls a random quote from the quote channel ({quotesChannel?.Mention ?? "not specified in this server"}).\n" +
 								  "If a user is specified, only gets quotes from that user.";
 			string usage = "<user>";
@@ -103,10 +103,10 @@ namespace Appalachia.Modules
 			await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateHelpEmbed(description, usage, this).Build());
 		}
 
-		private async Task<List<IMessage>> GetQuotes(ulong quoteChannelId, IUser user = null)
+		private async Task<List<IMessage>> GetQuotes(SocketTextChannel quoteChannel, IUser user = null)
 		{// Try optimization at your own peril. I've tried so many things. I think either I just dont know how to properly use IAsyncEnumerable, or discord just be slow. prob both -jolk 2022-01-12
 			List<IMessage> quotes = new List<IMessage>();
-			await foreach (IReadOnlyCollection<IMessage> subcontainer in Context.Guild.GetTextChannel(quoteChannelId).GetMessagesAsync(int.MaxValue))
+			await foreach (IReadOnlyCollection<IMessage> subcontainer in quoteChannel.GetMessagesAsync(int.MaxValue))
 				foreach (IMessage message in subcontainer.Where(msg => msg.MentionedUserIds.Count > 0 && (user == null || msg.MentionedUserIds.Contains(user.Id))))
 					quotes.Add(message);
 

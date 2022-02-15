@@ -95,7 +95,7 @@ namespace Appalachia
 			SocketGuildUser challenger = channel.Guild.GetUser(challenge.PlayerIds.Challenger);
 			SocketGuildUser opponent = channel.Guild.GetUser(challenge.PlayerIds.Opponent);
 
-			EmbedBuilder embed = new EmbedBuilder().WithColor(Util.Servers.GetColorOrDefault(channel.Guild.Id));
+			EmbedBuilder embed = new EmbedBuilder().WithColor(channel.Guild.GetColor());
 			bool accepted = false;
 			switch (status)
 			{
@@ -193,8 +193,8 @@ namespace Appalachia
 						Util.Rps.RemoveGame(gameData.MatchId);
 						if (!isBotMatch)
 						{
-							Util.Servers.IncrementRpsWins(guild.Id, challenger.Id);
-							Util.Servers.IncrementRpsLosses(guild.Id, opponent.Id);
+							challenger.IncrementRpsWins();
+							opponent.IncrementRpsLosses();
 						}
 						break;
 
@@ -203,8 +203,8 @@ namespace Appalachia
 						Util.Rps.RemoveGame(gameData.MatchId);
 						if (!isBotMatch)
 						{
-							Util.Servers.IncrementRpsWins(guild.Id, opponent.Id);
-							Util.Servers.IncrementRpsLosses(guild.Id, challenger.Id);
+							opponent.IncrementRpsWins();
+							challenger.IncrementRpsLosses();
 						}
 						break;
 

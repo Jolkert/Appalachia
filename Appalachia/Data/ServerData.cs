@@ -15,8 +15,7 @@ namespace Appalachia.Data
 
 		public ServerData() : base(ServersFile, new Dictionary<ulong, Server>()) { }
 
-		// TODO: I should really make like all of these extension methods. that would make using them a whole lot less of a pain in the ass I think -jolk 2022-02-14
-		// also method parameter names are all over the place here. should probably fix that one as well -jolk 2022-02-14
+		// i did it. these are in Extensions now. still have to clean up parameter names tho -jolk 2022-02-15
 		public void AddServer(ulong id, Server server)
 		{
 			if (!Exists(id))
