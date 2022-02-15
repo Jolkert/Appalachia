@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static Appalachia.Data.ServerData;
 
 namespace Appalachia.Utility.Extensions
 {
@@ -158,15 +157,15 @@ namespace Appalachia.Utility.Extensions
 		}
 
 		// Modifiers
-		public static ModificationResult SetQuoteChannel(this SocketGuild guild, SocketTextChannel channel)
+		public static ServerData.ModificationResult SetQuoteChannel(this SocketGuild guild, SocketTextChannel channel)
 		{
 			return Util.Servers.SetQuoteChannelId(guild.Id, channel?.Id ?? 0);
 		}
-		public static ModificationResult SetAnnouncementChannel(this SocketGuild guild, SocketTextChannel channel)
+		public static ServerData.ModificationResult SetAnnouncementChannel(this SocketGuild guild, SocketTextChannel channel)
 		{
 			return Util.Servers.SetAnnouncementChannelId(guild.Id, channel?.Id ?? 0);
 		}
-		public static ModificationResult SetColor(this SocketGuild guild, uint color)
+		public static ServerData.ModificationResult SetColor(this SocketGuild guild, uint color)
 		{
 			return Util.Servers.SetColor(guild.Id, color);
 		}
