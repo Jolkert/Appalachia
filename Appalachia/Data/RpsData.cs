@@ -5,7 +5,7 @@ namespace Appalachia.Data
 {
 	public class RpsData : BaseJsonDataHolder<Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>>
 	{
-		private const string FileName = "rps.json";
+		private const string RpsFile = "rps.json";
 
 		private Dictionary<ulong, RpsChallenge> Challenges
 		{
@@ -18,7 +18,7 @@ namespace Appalachia.Data
 			set => _data[DataKey.ActiveGames] = value;
 		}
 
-		public RpsData() : base(FileName, new Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>(){
+		public RpsData() : base(RpsFile, new Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>(){
 			{ DataKey.Challenges, new Dictionary<ulong, RpsChallenge>() },
 			{ DataKey.ActiveGames, new Dictionary<ulong, RpsChallenge>() }
 		})

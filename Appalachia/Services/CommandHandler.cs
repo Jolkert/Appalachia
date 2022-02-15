@@ -44,7 +44,7 @@ namespace Appalachia.Services
 			if (message.Source != MessageSource.User)
 				return Task.CompletedTask;
 
-			var argPos = 0;
+			int argPos = 0;
 			if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix(Program.Config.Settings.CommandPrefix, ref argPos)))
 				return Task.CompletedTask;
 

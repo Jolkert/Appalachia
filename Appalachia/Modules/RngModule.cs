@@ -116,17 +116,6 @@ namespace Appalachia.Modules
 					await BasicRng(max);
 			}
 
-			[Command("test"), RequireOwner]
-			public async Task RollTest()
-			{
-				EmbedBuilder embed = new EmbedBuilder().WithTitle("Test").WithDescription("We are testing");
-				for (int i = 1; i <= 5; i++)
-				{
-					embed.WithColor(GetRollColor(i, 1, 5, 1));
-					await Context.Channel.SendMessageAsync("", false, embed.Build());
-				}
-			}
-
 			private static string GenerateRollString(int[] rolls, int total, int min, int max)
 			{
 				string rollsString = string.Join(" / ", rolls.Select(n =>

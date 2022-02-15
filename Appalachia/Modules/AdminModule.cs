@@ -23,7 +23,7 @@ namespace Appalachia.Modules
 		}
 
 		[Group("modify"), Alias("mod", "set", "edit", "change"), Name(AdminModule.Source + "/" + Source)]
-		public class ModifyModule : AdminModule
+		public class ModifyModule : AdminModule 
 		{
 			private new const string Source = "Modify";
 

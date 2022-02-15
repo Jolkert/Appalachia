@@ -46,6 +46,7 @@ namespace Appalachia
 			Client.Ready += OnReadyAsync;
 			Client.JoinedGuild += OnServerJoinAsync;
 			Client.ReactionAdded += OnReactAsync;
+			Client.MessageReceived += FilterWordsAsync;
 
 			services.GetRequiredService<CommandService>().Log += LogAsync;
 			await Client.LoginAsync(TokenType.Bot, Config.Settings.Token);
@@ -186,14 +187,25 @@ namespace Appalachia
 				Util.Rps.IncrementRound(gameData.MatchId);
 				switch (matchWinner)
 				{
+					// there has to be a more sensible way to do this than this. it looks stupid but i dont feel like trying to make it better so this is what we got yall -jolk 2022-02-14
 					case RpsWinner.Challenger:
 						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, challenger).Build());
 						Util.Rps.RemoveGame(gameData.MatchId);
+						if (!isBotMatch)
+						{
+							Util.Servers.IncrementRpsWins(guild.Id, challenger.Id);
+							Util.Servers.IncrementRpsLosses(guild.Id, opponent.Id);
+						}
 						break;
 
 					case RpsWinner.Opponent:
 						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, opponent).Build());
 						Util.Rps.RemoveGame(gameData.MatchId);
+						if (!isBotMatch)
+						{
+							Util.Servers.IncrementRpsWins(guild.Id, opponent.Id);
+							Util.Servers.IncrementRpsLosses(guild.Id, challenger.Id);
+						}
 						break;
 
 					default:
@@ -299,6 +311,23 @@ namespace Appalachia
 		private static string GenerateUserSelectionString(SocketGuildUser user, RpsSelection selection)
 		{
 			return $"{user.Mention} chose {selection} ({selection.ToEmote()})";
+		}
+
+		private async Task FilterWordsAsync(SocketMessage message)
+		{
+			if (message.Source == MessageSource.User && message.Channel is not SocketDMChannel && Util.FilteredWords.HasFilteredWord(message.Content))
+			{
+				try
+				{
+					await message.DeleteAsync();
+					await LogAsync($"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source);
+				}
+				catch (Discord.Net.HttpException)
+				{
+					await LogAsync($"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source);
+				}
+				
+			}
 		}
 
 		private async Task OnReadyAsync()

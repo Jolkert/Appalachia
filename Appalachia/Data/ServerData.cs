@@ -1,6 +1,8 @@
 ﻿using Appalachia.Utility;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Appalachia.Data
 {
@@ -13,6 +15,8 @@ namespace Appalachia.Data
 
 		public ServerData() : base(ServersFile, new Dictionary<ulong, Server>()) { }
 
+		// TODO: I should really make like all of these extension methods. that would make using them a whole lot less of a pain in the ass I think -jolk 2022-02-14
+		// also method parameter names are all over the place here. should probably fix that one as well -jolk 2022-02-14
 		public void AddServer(ulong id, Server server)
 		{
 			if (!Exists(id))
@@ -44,6 +48,32 @@ namespace Appalachia.Data
 		{
 			Server server = _data.GetValueOrDefault(id ?? 0);
 			return server != null ? server.Color : Colors.Default;
+		}
+		public Server.Score GetUserScore(ulong? guildId, ulong userId)
+		{
+			Server server = _data.GetValueOrDefault(guildId ?? 0, null);
+			return server.RpsLeaderboard.GetValueOrDefault(userId);
+		}
+		public int GetUserRank(ulong? guildId, ulong userId)
+		{
+			int count = 1;
+			foreach (var pair in GetSortedRpsLeaderboard(guildId))
+			{
+				if (pair.Key == userId)
+					return count;
+				count++;
+			}
+
+			return -1;
+		}
+		public IEnumerable<KeyValuePair<ulong, Server.Score>> GetSortedRpsLeaderboard(ulong? guildId)
+		{
+			Server server = _data.GetValueOrDefault(guildId ?? 0, null);
+			return server?.RpsLeaderboard.ToArray()
+							   .OrderByDescending(pair => pair.Value.Wins * Math.Round(pair.Value.WinRate, 4))
+							   .ThenByDescending(pair => pair.Value.Wins)
+							   .ThenBy(pair => pair.Value.Losses)
+							   .ThenBy(pair => pair.Key);
 		}
 
 		public ModificationResult SetQuoteChannelId(ulong? id, ulong newQuoteChannelId)
@@ -82,6 +112,29 @@ namespace Appalachia.Data
 			WriteJson();
 			return ModificationResult.Success;
 		}
+	
+		public bool IncrementRpsWins(ulong serverId, ulong userId)
+		{
+			if (!_data.TryGetValue(serverId, out Server server))
+				return false;
+			if (!server.RpsLeaderboard.ContainsKey(userId))
+				server.RpsLeaderboard.Add(userId, new Server.Score());
+
+			server.RpsLeaderboard[userId].Wins++;
+			WriteJson();
+			return true;
+		}
+		public bool IncrementRpsLosses(ulong serverId, ulong userId)
+		{
+			if (!_data.TryGetValue(serverId, out Server server))
+				return false;
+			if (!server.RpsLeaderboard.ContainsKey(userId))
+				server.RpsLeaderboard.Add(userId, new Server.Score());
+
+			server.RpsLeaderboard[userId].Losses++;
+			WriteJson();
+			return true;
+		}
 
 		// holy fuck its like 5am. i am tired. i need to sleep -jolk 2022-01-03
 		public override void ReloadJson()
@@ -105,11 +158,41 @@ namespace Appalachia.Data
 		public ulong AnnouncementChannelId { get; set; }
 		public uint Color { get; set; }
 
+		// I really dont think this should be a dictionary. I kinda wanna make this like a normal list or smth that i sort on modification
+		// that would make a lot more sense but would be a bit of effort to go refactor everything. idk prob eventually -jolk 2022-02-14
+		// TODO: that ^
+		public Dictionary<ulong, Score> RpsLeaderboard;
+
 		public Server(ulong quoteChannelId = 0, ulong announcementChannelId = 0, uint color = Colors.Default)
 		{
 			this.QuoteChannelId = quoteChannelId;
 			this.AnnouncementChannelId = announcementChannelId;
 			this.Color = color;
+			this.RpsLeaderboard = new Dictionary<ulong, Score>();
+		}
+
+		public class Score
+		{
+			public int Wins { get; set; }
+			public int Losses { get; set; }
+			public double WinRate { get => (Wins + Losses == 0) ? 0 : (double)Wins / (Losses + Wins); }
+
+
+			public Score()
+			{
+				this.Wins = 0;
+				this.Losses = 0;
+			}
+			public Score(int wins, int losses)
+			{
+				this.Wins = wins;
+				this.Losses = losses;
+			}
+
+			public override string ToString()
+			{
+				return $"{Wins}/{Losses}/{Math.Round(WinRate, 4)}";
+			}
 		}
 	}
 }
