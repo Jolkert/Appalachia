@@ -315,7 +315,7 @@ namespace Appalachia
 
 		private async Task FilterWordsAsync(SocketMessage message)
 		{
-			if (message.Source == MessageSource.User && message.Channel is not SocketDMChannel && Util.FilteredWords.HasFilteredWord(message.Content))
+			if (message.Source == MessageSource.User && message.Channel is not SocketDMChannel && message.HasFilteredWord())
 			{
 				try
 				{

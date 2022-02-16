@@ -225,10 +225,84 @@ namespace Appalachia.Modules
 				await Context.Channel.SendMessageAsync("", false, embed.Build());
 			}
 
+
+			[Group("filter"), Alias("bannedwords", "blacklist"), Name(AdminModule.Source + "/" + ModifyModule.Source + "/" + Source)]
+			public class WordFilterModule : AdminModule
+			{
+				private new const string Source = "Word Filter";
+				private readonly Regex WordRegex = new Regex(@"(?<=\b)([a-z0-9]*)(?=\b)", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture);
+
+				[Command("add")]
+				public async Task AddWords([Remainder] string input)
+				{
+					MatchCollection matches = WordRegex.Matches(input);
+					string[] words = WordRegex.Matches(input).Select(match => match.Value).Where(str => str != "").Distinct().ToArray();
+
+					ServerData.ModificationResult result = Context.Guild.AddFilteredWords(words);
+
+					// this is annoying to read i think -jolk 2022-02-15
+					EmbedBuilder embed = (result switch
+					{
+						ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
+																				   .WithDescription($"All words have been addeded to the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
+																				   .WithColor(Context.Guild.GetColor()),
+						ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
+																					 .WithDescription("All provided words are already filtered in this server!")
+																					 .WithColor(Context.Guild.GetColor()),
+						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
+					}).WithImageUrl(Context.Guild.IconUrl);
+
+					await Context.Channel.SendMessageAsync("", false, embed.Build());
+				}
+				[Command("remove"), Alias("delete", "del")]
+				public async Task RemoveWords([Remainder] string input)
+				{
+					MatchCollection matches = WordRegex.Matches(input);
+					string[] words = WordRegex.Matches(input).Select(match => match.Value).Where(str => str != "").Distinct().ToArray();
+
+					ServerData.ModificationResult result = Context.Guild.RemoveFilteredWords(words);
+
+					// this is annoying to read i think -jolk 2022-02-15
+					EmbedBuilder embed = (result switch
+					{
+						ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
+																				   .WithDescription($"All words have been removed from the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
+																				   .WithColor(Context.Guild.GetColor()),
+						ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
+																					 .WithDescription("All provided words are already allowed in this server!")
+																					 .WithColor(Context.Guild.GetColor()),
+						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
+					}).WithImageUrl(Context.Guild.IconUrl);
+
+					await Context.Channel.SendMessageAsync("", false, embed.Build());
+				}
+				[Command("clear")]
+				public async Task ClearWords()
+				{
+					ServerData.ModificationResult result = Context.Guild.ClearFilteredWords();
+
+					// this is annoying to read i think -jolk 2022-02-15
+					EmbedBuilder embed = (result switch
+					{
+						ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
+																				   .WithDescription("Server word filter has been cleared!")
+																				   .WithColor(Context.Guild.GetColor()),
+						ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
+																					 .WithDescription("The server word filter was already empty!")
+																					 .WithColor(Context.Guild.GetColor()),
+						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
+					}).WithImageUrl(Context.Guild.IconUrl);
+
+					await Context.Channel.SendMessageAsync("", false, embed.Build());
+				}
+			}
+
 			private static string MutiplyString(string str, int times)
 			{
 				return String.Concat(Enumerable.Repeat(str, times));
 			}
 		}
+
+		
 	}
 }

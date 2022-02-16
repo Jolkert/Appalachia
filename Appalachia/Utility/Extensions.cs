@@ -4,6 +4,8 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Appalachia.Utility.Extensions
@@ -113,6 +115,30 @@ namespace Appalachia.Utility.Extensions
 			await message.AddReactionAsync(Reactions.RpsScissors);
 		}
 
+		public static bool HasFilteredWord(this SocketMessage message)
+		{
+			string[] globalFilteredWords = Util.FilteredWords.GetFilteredWords();
+			string[] serverFilteredWords = Array.Empty<string>();
+			if (message.Channel is SocketGuildChannel channel)
+				serverFilteredWords = channel.Guild.GetFilteredWords();
+
+			if (globalFilteredWords.Length == 0 && serverFilteredWords.Length == 0)
+				return false;
+
+			// this might get a tad overzealous? idk i'll (hopefully) come back to it later or smth -jolk 2022-02-14
+			string regexString = string.Join('|', globalFilteredWords.Concat(serverFilteredWords)).ToLowerInvariant()
+												  .Replace("i", "[i!1]")
+												  .Replace("e", "[e3]")
+												  .Replace("o", "[o0]")
+												  .Replace("a", "[a4@]")
+												  .Replace("l", "[l1]")
+												  .Replace("b", "[b8]")
+												  .Replace("s", "[s5]")
+												  .Replace("z", "[z2]");
+
+			return Regex.IsMatch(message.Content.ToLowerInvariant(), regexString);
+		}
+
 		public static string ToOrdinal(this int cardinal)
 		{// is this readable? i mean its a bit wack, but it isnt too bad i guess. i'll leave it -jolk 2022-02-14
 			return cardinal + (cardinal % 100) switch
@@ -143,6 +169,11 @@ namespace Appalachia.Utility.Extensions
 		{
 			return Util.Servers.GetColorOrDefault(guild.Id);
 		}
+		public static string[] GetFilteredWords(this SocketGuild guild)
+		{
+			return Util.Servers.GetFilteredWords(guild.Id);
+		}
+
 		public static IEnumerable<KeyValuePair<ulong, Server.Score>> GetRpsLeaderBoard(this SocketGuild guild)
 		{
 			return Util.Servers.GetSortedRpsLeaderboard(guild.Id);
@@ -168,6 +199,18 @@ namespace Appalachia.Utility.Extensions
 		public static ServerData.ModificationResult SetColor(this SocketGuild guild, uint color)
 		{
 			return Util.Servers.SetColor(guild.Id, color);
+		}
+		public static ServerData.ModificationResult AddFilteredWords(this SocketGuild guild, params string[] words)
+		{
+			return Util.Servers.AddFilteredWords(guild.Id, words);
+		}
+		public static ServerData.ModificationResult RemoveFilteredWords(this SocketGuild guild, params string[] words)
+		{
+			return Util.Servers.RemoveFilteredWords(guild.Id, words);
+		}
+		public static ServerData.ModificationResult ClearFilteredWords(this SocketGuild guild)
+		{
+			return Util.Servers.ClearFilteredWords(guild.Id);
 		}
 
 		public static bool IncrementRpsWins(this SocketGuildUser user)
