@@ -41,7 +41,7 @@ namespace Appalachia.Modules
 					RpsGame gameData = new RpsGame(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore, botSelection);
 					await Program.LogAsync($"Appalachia selects [{botSelection}] in match [#{gameData.MatchId:x6}] against [{Context.User.GetFullUsername()}]", Source);
 
-					Util.Rps.AddGame(gameData.MatchId, gameData);
+					gameData.AddToDatabase();
 					IMessage message = await Program.SendBotSelectionMessage(Context.Channel, Context.User, gameData);
 
 					await message.AddRpsReactionsAsync();
@@ -59,7 +59,7 @@ namespace Appalachia.Modules
 
 
 				IMessage message = await Context.Channel.SendMessageAsync("", false, embed.Build());
-				Util.Rps.AddChallenge(message.Id, new RpsChallenge(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore));
+				new RpsChallenge(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore).AddToDatabase(message.Id);
 
 				await message.AddReactionAsync(Reactions.RpsAccept);
 				await message.AddReactionAsync(Reactions.RpsDeny);

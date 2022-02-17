@@ -228,5 +228,48 @@ namespace Appalachia.Utility.Extensions
 
 			return Util.Servers.IncrementRpsLosses(user.Guild.Id, user.Id);
 		}
+
+
+		// RpsData Extensions - use these instead of instance methods of Util.RpsData also -jolk 2022-02-16
+
+		public static void AddToDatabase(this RpsGame game)
+		{// I really dont know why the method doesnt just take only the game and get the matchId from there? whatever -jolk 2022-02-16
+			Util.Rps.AddGame(game.MatchId, game);
+		}
+		public static void AddToDatabase(this RpsChallenge challenge, ulong messageId)
+		{
+			Util.Rps.AddChallenge(messageId, challenge);
+		}
+
+		public static void RemoveFromDatabase(this RpsGame game)
+		{
+			Util.Rps.RemoveGame(game.MatchId);
+		}
+
+		public static uint IncrementChallengerScore(this RpsGame game)
+		{
+			return Util.Rps.IncrementChallengerScore(game.MatchId);
+		}
+		public static uint IncrementOpponentScore(this RpsGame game)
+		{
+			return Util.Rps.IncrementOpponentScore(game.MatchId);
+		}
+		public static void IncrementRound(this RpsGame game)
+		{
+			Util.Rps.IncrementRound(game.MatchId);
+		}
+
+		public static void SetChallengerSelection(this RpsGame game, RpsSelection selection)
+		{
+			Util.Rps.SetChallengerSelection(game.MatchId, selection);
+		}
+		public static void SetOpponentSelection(this RpsGame game, RpsSelection selection)
+		{
+			Util.Rps.SetOpponentSelection(game.MatchId, selection);
+		}
+		public static void ResetSelections(this RpsGame game, bool isBotMatch = false)
+		{
+			Util.Rps.ResetSelections(game.MatchId, isBotMatch);
+		}
 	}
 }

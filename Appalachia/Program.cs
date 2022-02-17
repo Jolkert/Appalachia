@@ -140,14 +140,14 @@ namespace Appalachia
 			{
 				RpsSelection userSelection = status.GetUserSelection();
 
-				Util.Rps.SetChallengerSelection(gameData.MatchId, userSelection);
+				gameData.SetChallengerSelection(userSelection);
 				await LogAsync($"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})", Source);
 			}
 			else
 			{
 				RpsSelection userSelection = status.GetUserSelection();
 
-				Util.Rps.SetOpponentSelection(gameData.MatchId, userSelection);
+				gameData.SetOpponentSelection(userSelection);
 				await LogAsync($"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})", Source);
 			}
 
@@ -167,12 +167,12 @@ namespace Appalachia
 				switch (roundWinner)
 				{
 					case RpsWinner.Challenger:
-						if (Util.Rps.IncrementChallengerScore(gameData.MatchId) >= gameData.FirstToScore)
+						if (gameData.IncrementChallengerScore() >= gameData.FirstToScore)
 							matchWinner = RpsWinner.Challenger;
 						break;
 
 					case RpsWinner.Opponent:
-						if (Util.Rps.IncrementOpponentScore(gameData.MatchId) >= gameData.FirstToScore)
+						if (gameData.IncrementOpponentScore() >= gameData.FirstToScore)
 							matchWinner = RpsWinner.Opponent;
 						break;
 
@@ -184,13 +184,13 @@ namespace Appalachia
 
 				// send match winner if determined
 				// TODO: update leaderboards once they're working -jolk 2022-01-10
-				Util.Rps.IncrementRound(gameData.MatchId);
+				gameData.IncrementRound();
 				switch (matchWinner)
 				{
 					// there has to be a more sensible way to do this than this. it looks stupid but i dont feel like trying to make it better so this is what we got yall -jolk 2022-02-14
 					case RpsWinner.Challenger:
 						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, challenger).Build());
-						Util.Rps.RemoveGame(gameData.MatchId);
+						gameData.RemoveFromDatabase();
 						if (!isBotMatch)
 						{
 							challenger.IncrementRpsWins();
@@ -200,7 +200,7 @@ namespace Appalachia
 
 					case RpsWinner.Opponent:
 						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, opponent).Build());
-						Util.Rps.RemoveGame(gameData.MatchId);
+						gameData.RemoveFromDatabase();
 						if (!isBotMatch)
 						{
 							opponent.IncrementRpsWins();
@@ -209,7 +209,7 @@ namespace Appalachia
 						break;
 
 					default:
-						Util.Rps.ResetSelections(gameData.MatchId, isBotMatch);
+						gameData.ResetSelections(isBotMatch);
 						if (!isBotMatch)
 							SendPvpSelectionMessages(challenger, opponent, gameData);
 						else
@@ -227,7 +227,7 @@ namespace Appalachia
 			if (challenge is not RpsGame gameData)
 			{
 				gameData = new RpsGame(challenge);
-				Util.Rps.AddGame(gameData.MatchId, gameData);
+				gameData.AddToDatabase();
 			}
 
 			IUserMessage challengerMessage = null;

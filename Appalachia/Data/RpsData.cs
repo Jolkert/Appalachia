@@ -24,24 +24,24 @@ namespace Appalachia.Data
 		})
 		{ }
 
-		public RpsGame GetActiveGame(uint id)
+		public RpsGame GetActiveGame(uint gameId)
 		{
-			return (RpsGame)ActiveGames.GetValueOrDefault(id);
+			return (RpsGame)ActiveGames.GetValueOrDefault(gameId);
 		}
 		public RpsChallenge GetChallenge(ulong messageId)
 		{
 			return Challenges.GetValueOrDefault(messageId);
 		}
 
-		public bool GameExists(uint id)
+		public bool GameExists(uint gameId)
 		{
-			return ActiveGames.ContainsKey(id);
+			return ActiveGames.ContainsKey(gameId);
 		}
 
-		public void AddGame(ulong id, RpsGame rawGame)
+		public void AddGame(ulong gameId, RpsGame rawGame)
 		{
 
-			ActiveGames.Add(id, rawGame);
+			ActiveGames.Add(gameId, rawGame);
 			WriteJson();
 		}
 		public void AddChallenge(ulong messageId, RpsChallenge challenge)
@@ -50,9 +50,9 @@ namespace Appalachia.Data
 			WriteJson();
 		}
 
-		public bool RemoveGame(uint id)
+		public bool RemoveGame(uint gameId)
 		{
-			bool success = ActiveGames.Remove(id);
+			bool success = ActiveGames.Remove(gameId);
 			WriteJson();
 			return success;
 		}
@@ -79,7 +79,7 @@ namespace Appalachia.Data
 		}
 		public void IncrementRound(uint gameId)
 		{
-			GetActiveGame(gameId).IncrementRound();
+			GetActiveGame(gameId).RoundCount++;
 			WriteJson();
 		}
 
@@ -95,7 +95,7 @@ namespace Appalachia.Data
 		}
 		public void ResetSelections(uint gameId, bool isBotMatch = false)
 		{
-			GetActiveGame(gameId).ClearSelections(isBotMatch);
+			GetActiveGame(gameId).Selections = new ChallengerOpponentPair<RpsSelection>(RpsSelection.None, isBotMatch ? (RpsSelection)(1 << Util.Rand.Next(3)) : RpsSelection.None);
 			WriteJson();
 		}
 
@@ -164,17 +164,7 @@ namespace Appalachia.Data
 			this.MatchId = GenerateId();
 		}
 
-
-		public void IncrementRound()
-		{
-			this.RoundCount++;
-		}
-		public void ClearSelections(bool isBotMatch = false)
-		{
-			this.Selections = new ChallengerOpponentPair<RpsSelection>(RpsSelection.None, isBotMatch ? (RpsSelection)(1 << Util.Rand.Next(3)) : RpsSelection.None);
-		}
-
-		public static uint GenerateId()
+		private static uint GenerateId()
 		{
 			uint id;
 			do
