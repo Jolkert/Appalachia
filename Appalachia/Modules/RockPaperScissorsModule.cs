@@ -4,6 +4,8 @@ using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -69,11 +71,71 @@ namespace Appalachia.Modules
 		public async Task RockPaperScissorsLeaderboard(SocketGuildUser userFilter = null)
 		{
 			if (userFilter == null)
-			{
-				await Context.Channel.SendMessageAsync("aint done yet.");			}
+			{// i actually really dont like this code, but it works so im leaving it at least for now -jolk 2022-03-22
+				await Context.Channel.SendMessageAsync("aint done yet.");
+
+				KeyValuePair<ulong, Server.UserScore>[] leaderboard = Context.Guild.GetRpsLeaderboard();
+
+				(int rank, string user, string elo, string wins, string losses, string winRate)[] userDataStrings = new (int, string, string, string, string, string)[leaderboard.Length];
+				// this is kinda gross but i think it might be the easiest way? -jolk 2022-03-15
+
+				int rank = 1, nameSpacing = 4, eloSpacing = 3, winsSpacing = 1, lossesSpacing = 1, winRateSpacing = 5;
+				for (int i = 0; i < leaderboard.Length; i++)
+				{
+					KeyValuePair<ulong, Server.UserScore> pair = leaderboard[i];
+					if (i > 0 && pair.Value.Elo != leaderboard[i - 1].Value.Elo)
+						rank = i + 1;
+
+					SocketGuildUser user = Context.Guild.GetUser(pair.Key);
+					userDataStrings[i] = (rank, user.GetFullUsername(), pair.Value.Elo.ToString(), pair.Value.Wins.ToString(), pair.Value.Losses.ToString(), Math.Round(pair.Value.WinRate, 4).ToString("#.0000"));
+
+
+					// this is awful. please come up with a better way to do this thank -jolk 2022-03-17
+					if (userDataStrings[i].user.Length > nameSpacing)
+						nameSpacing = userDataStrings[i].user.Length;
+
+					if (userDataStrings[i].elo.Length > eloSpacing)
+						eloSpacing = userDataStrings[i].elo.Length;
+
+					if (userDataStrings[i].wins.Length > winsSpacing)
+						winsSpacing = userDataStrings[i].wins.Length;
+
+					if (userDataStrings[i].losses.Length > lossesSpacing)
+						lossesSpacing = userDataStrings[i].losses.Length;
+
+					if (userDataStrings[i].winRate.Length > winRateSpacing)
+						winRateSpacing = userDataStrings[i].winRate.Length;
+				}
+
+				int rankSpacing = (userDataStrings[^1].rank / 10) + 1;
+
+				string output = string.Format($"```{{0, -{rankSpacing}}}. │ {{1, -{nameSpacing}}} │ {{2, -{eloSpacing}}} │ {{3, {winsSpacing}}} │ {{4, {lossesSpacing}}} │ {{5, {winRateSpacing}}}",
+					"#", "USER", "ELO", "W", "L", "W/L");
+				output += $"\n{"═".Repeat(rankSpacing)}══╪═{"═".Repeat(nameSpacing)}═╪═{"═".Repeat(eloSpacing)}═╪═{"═".Repeat(winsSpacing)}═╪═{"═".Repeat(lossesSpacing)}═╪═{"═".Repeat(winRateSpacing)}";
+
+				bool top3 = false;
+				foreach ((int rank, string user, string elo, string wins, string losses, string winRate) data in userDataStrings)
+				{
+					if (!top3 && data.rank > 3)
+					{
+						output += $"\n{"─".Repeat(rankSpacing)}──┼─{"─".Repeat(nameSpacing)}─┼─{"─".Repeat(eloSpacing)}─┼─{"─".Repeat(winsSpacing)}─┼─{"─".Repeat(lossesSpacing)}─┼─{"─".Repeat(winRateSpacing)}";
+						top3 = true;
+					}
+
+					output += string.Format($"\n{{0, -{rankSpacing}}}. │ {{1, -{nameSpacing}}} │ {{2, {eloSpacing}}} │ {{3, {winsSpacing}}} │ {{4, {lossesSpacing}}} │ {{5, {winRateSpacing}}}",
+						data.rank, data.user, data.elo, data.wins, data.losses, data.winRate);
+				}
+
+				EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Leaderboard")
+					.WithDescription($"{output}```")
+					.WithThumbnailUrl(Context.Guild.IconUrl)
+					.WithColor(Context.Guild.GetColor());
+
+				await Context.Channel.SendMessageAsync("", false, embed.Build());
+			}
 			else
 			{
-				Server.Score userScore = userFilter.GetGuildRpsScore();
+				Server.UserScore userScore = userFilter.GetGuildRpsScore();
 				EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Stats")
 										   .WithDescription($"Stats for {userFilter.Mention}\n")
 										   .WithFields(new EmbedFieldBuilder[]

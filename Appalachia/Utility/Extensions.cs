@@ -153,6 +153,10 @@ namespace Appalachia.Utility.Extensions
 				}
 			};
 		}
+		public static string Repeat(this string str, int times)
+		{
+			return String.Concat(Enumerable.Repeat(str, times));
+		}
 
 		// Server Data Extensions - please always use these instead of ever calling instance methods of Util.Servers thanks -jolk 2022-02-15
 
@@ -174,11 +178,11 @@ namespace Appalachia.Utility.Extensions
 			return Util.Servers.GetFilteredWords(guild.Id);
 		}
 
-		public static IEnumerable<KeyValuePair<ulong, Server.Score>> GetRpsLeaderBoard(this SocketGuild guild)
+		public static KeyValuePair<ulong, Server.UserScore>[] GetRpsLeaderboard(this SocketGuild guild)
 		{
 			return Util.Servers.GetSortedRpsLeaderboard(guild.Id);
 		}
-		public static Server.Score GetGuildRpsScore(this SocketGuildUser user)
+		public static Server.UserScore GetGuildRpsScore(this SocketGuildUser user)
 		{
 			return Util.Servers.GetUserScore(user.Guild.Id, user.Id);
 		}

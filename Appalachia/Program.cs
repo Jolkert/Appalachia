@@ -185,27 +185,35 @@ namespace Appalachia
 				// send match winner if determined
 				// TODO: update leaderboards once they're working -jolk 2022-01-10
 				gameData.IncrementRound();
+				(int winner, int loser) previousElos = (-1, -1);
 				switch (matchWinner)
 				{
-					// there has to be a more sensible way to do this than this. it looks stupid but i dont feel like trying to make it better so this is what we got yall -jolk 2022-02-14
+					// there has to be a more sensible way to do this than this. it looks stupid but i dont feel like trying to make it better so this is what we got yall -jolk 2022-02-14	
 					case RpsWinner.Challenger:
-						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, challenger).Build());
+						
 						gameData.RemoveFromDatabase();
 						if (!isBotMatch)
 						{
 							challenger.IncrementRpsWins();
 							opponent.IncrementRpsLosses();
+
+							previousElos = Util.Servers.UpdateElo(challenger, opponent);
 						}
+
+						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, challenger, opponent, previousElos).Build());
 						break;
 
 					case RpsWinner.Opponent:
-						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, opponent).Build());
 						gameData.RemoveFromDatabase();
 						if (!isBotMatch)
 						{
 							opponent.IncrementRpsWins();
 							challenger.IncrementRpsLosses();
+
+							previousElos = Util.Servers.UpdateElo(opponent, challenger);
 						}
+
+						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, opponent, challenger, previousElos).Build());
 						break;
 
 					default:
@@ -272,10 +280,17 @@ namespace Appalachia
 																	  .Build());
 		}
 
-		private static EmbedBuilder GenerateMatchResultEmbed(RpsGame gameData, SocketGuildUser winner)
+		private static EmbedBuilder GenerateMatchResultEmbed(RpsGame gameData, SocketGuildUser winner, SocketGuildUser loser, (int winner, int loser) previousElos)
 		{
+			(int winner, int loser) newElos = (winner.GetGuildRpsScore().Elo, loser.GetGuildRpsScore().Elo);
+
+			string description = $"{winner.Mention} wins the set!";
+			if (previousElos.winner != -1 && previousElos.loser != -1)
+				description += $"\n\n{winner.Mention}: {previousElos.winner} → {newElos.winner} (+{newElos.winner - previousElos.winner})\n" +
+										$"{loser.Mention}: {previousElos.loser} → {newElos.loser} (-{previousElos.loser - newElos.loser})";
+
 			return new EmbedBuilder().WithTitle("Game, Set, and Match!")
-					  .WithDescription($"{winner.Mention} wins the set!")
+					  .WithDescription(description)
 					  .WithColor(gameData.MatchId)
 					  .WithThumbnailUrl(winner.GetGuildOrDefaultAvatarUrl())
 					  .WithFooter($"Match ID: #{gameData.MatchId:x6}");

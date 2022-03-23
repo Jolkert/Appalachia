@@ -18,7 +18,10 @@ namespace Appalachia.Modules
 			await Program.LogAsync("Reloading json files...", Source);
 
 			foreach (IJsonDataHolder data in Util.DataHolders)
+			{
 				data.ReloadJson();
+				data.WriteJson();
+			}
 
 			await Context.Channel.SendMessageAsync("", false, new EmbedBuilder()
 																.WithTitle("Reloaded!")

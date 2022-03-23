@@ -52,10 +52,10 @@ namespace Appalachia.Modules
 						switch (hexString.Length)
 						{
 							case 2:
-								hexString = MutiplyString(hexString, 3);
+								hexString = hexString.Repeat(3);
 								break;
 							case 1:
-								hexString = MutiplyString(hexString, 6);
+								hexString = hexString.Repeat(6);
 								break;
 							default:
 								break;
@@ -295,11 +295,6 @@ namespace Appalachia.Modules
 
 					await Context.Channel.SendMessageAsync("", false, embed.Build());
 				}
-			}
-
-			private static string MutiplyString(string str, int times)
-			{
-				return String.Concat(Enumerable.Repeat(str, times));
 			}
 		}
 

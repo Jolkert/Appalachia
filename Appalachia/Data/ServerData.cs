@@ -1,4 +1,6 @@
 ﻿using Appalachia.Utility;
+using Appalachia.Utility.Extensions;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,29 +52,36 @@ namespace Appalachia.Data
 			return _data.GetValueOrDefault(guildId)?.FilteredWords.ToArray();
 		}
 
-		public Server.Score GetUserScore(ulong guildId, ulong userId)
+		public Server.UserScore GetUserScore(ulong guildId, ulong userId)
 		{
 			return _data.GetValueOrDefault(guildId)?.RpsLeaderboard.GetValueOrDefault(userId);
 		}
 		public int GetUserRank(ulong guildId, ulong userId)
 		{
-			int count = 1;
-			foreach (var pair in GetSortedRpsLeaderboard(guildId))
+			KeyValuePair<ulong, Server.UserScore>[] leaderboard = GetSortedRpsLeaderboard(guildId);
+
+			int rank = 1;
+			for (int i = 0; i < leaderboard.Length; i++)
 			{
+				KeyValuePair<ulong, Server.UserScore> pair = leaderboard[i];
+
+				if (i > 0 && !pair.Equals(leaderboard[i - 1]))
+					rank = i + 1;
+
 				if (pair.Key == userId)
-					return count;
-				count++;
+					return rank;
 			}
 
 			return -1;
 		}
-		public IEnumerable<KeyValuePair<ulong, Server.Score>> GetSortedRpsLeaderboard(ulong guildId)
+		public KeyValuePair<ulong, Server.UserScore>[] GetSortedRpsLeaderboard(ulong guildId)
 		{
 			return _data.GetValueOrDefault(guildId)?.RpsLeaderboard.ToArray()
-						.OrderByDescending(pair => pair.Value.Wins * Math.Round(pair.Value.WinRate, 4))
+						.OrderByDescending(pair => pair.Value.Elo)
+						.ThenByDescending(pair => pair.Value.WinRate)
 						.ThenByDescending(pair => pair.Value.Wins)
 						.ThenBy(pair => pair.Value.Losses)
-						.ThenBy(pair => pair.Key);
+						.ThenBy(pair => pair.Key).ToArray();
 		}
 		
 
@@ -170,7 +179,7 @@ namespace Appalachia.Data
 			if (!_data.TryGetValue(guildId, out Server server))
 				return false;
 			if (!server.RpsLeaderboard.ContainsKey(userId))
-				server.RpsLeaderboard.Add(userId, new Server.Score());
+				server.RpsLeaderboard.Add(userId, new Server.UserScore());
 
 			server.RpsLeaderboard[userId].Wins++;
 			WriteJson();
@@ -181,11 +190,27 @@ namespace Appalachia.Data
 			if (!_data.TryGetValue(guildId, out Server server))
 				return false;
 			if (!server.RpsLeaderboard.ContainsKey(userId))
-				server.RpsLeaderboard.Add(userId, new Server.Score());
+				server.RpsLeaderboard.Add(userId, new Server.UserScore());
 
 			server.RpsLeaderboard[userId].Losses++;
 			WriteJson();
 			return true;
+		}
+
+		public (int, int) UpdateElo(SocketGuildUser winner, SocketGuildUser loser)
+		{
+			return UpdateElo(winner.GetGuildRpsScore(), loser.GetGuildRpsScore());
+		}
+		public (int, int) UpdateElo(Server.UserScore p1Score, Server.UserScore p2Score)
+		{
+			(int, int) previousElo = (p1Score.Elo, p2Score.Elo);
+
+			p1Score.UpdateElo(true, p2Score);
+			p2Score.UpdateElo(false, p1Score);
+
+			WriteJson();
+
+			return previousElo;
 		}
 
 		// holy fuck its like 5am. i am tired. i need to sleep -jolk 2022-01-03
@@ -214,38 +239,56 @@ namespace Appalachia.Data
 		// I really dont think this should be a dictionary. I kinda wanna make this like a normal list or smth that i sort on modification
 		// that would make a lot more sense but would be a bit of effort to go refactor everything. idk prob eventually -jolk 2022-02-14
 		// TODO: that ^
-		public Dictionary<ulong, Score> RpsLeaderboard { get; set; } // not sure why that wasnt a property before. knew something looked off. oops -jolk 2022-02-15
+		public Dictionary<ulong, UserScore> RpsLeaderboard { get; set; } // not sure why that wasnt a property before. knew something looked off. oops -jolk 2022-02-15
 
 		public Server(ulong quoteChannelId = 0, ulong announcementChannelId = 0, uint color = Colors.Default)
 		{
 			this.QuoteChannelId = quoteChannelId;
 			this.AnnouncementChannelId = announcementChannelId;
 			this.Color = color;
-			this.RpsLeaderboard = new Dictionary<ulong, Score>();
+			this.RpsLeaderboard = new Dictionary<ulong, UserScore>();
 			this.FilteredWords = new List<string>();
 		}
 
-		public class Score
+		public class UserScore
 		{
+			public int Elo { get; set; }
 			public int Wins { get; set; }
 			public int Losses { get; set; }
 			public double WinRate { get => (Wins + Losses == 0) ? 0 : (double)Wins / (Losses + Wins); }
 
+			private static readonly double EloSensitivity = 40.0d; // this controls how much elo changes after a match. bigger number == bigger change -jolk 2022-03-22
 
-			public Score()
+			public UserScore()
 			{
 				this.Wins = 0;
 				this.Losses = 0;
+				this.Elo = 1500;
 			}
-			public Score(int wins, int losses)
+			public UserScore(int wins, int losses, int elo = 1500)
 			{
 				this.Wins = wins;
 				this.Losses = losses;
+				this.Elo = elo;
+			}
+
+			public void UpdateElo(bool win, UserScore opponent)
+			{
+				UpdateElo(win, opponent.Elo);
+			}
+
+			public void UpdateElo(bool win, int opponentElo)
+			{
+				this.Elo += (int)(EloSensitivity * ((win ? 1 : 0) - (1.0 / (1 + Math.Pow(10, (opponentElo - this.Elo) / 400)))));
 			}
 
 			public override string ToString()
 			{
-				return $"{Wins}/{Losses}/{Math.Round(WinRate, 4)}";
+				return $"{Elo}/{Wins}/{Losses}/{Math.Round(WinRate, 4)}";
+			}
+			public bool Equals(UserScore score)
+			{
+				return this.Wins == score.Wins && this.Losses == score.Losses;
 			}
 		}
 	}
