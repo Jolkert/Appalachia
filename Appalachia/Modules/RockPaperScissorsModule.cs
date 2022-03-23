@@ -118,7 +118,7 @@ namespace Appalachia.Modules
 				{
 					if (!top3 && data.rank > 3)
 					{
-						output += $"\n{"─".Repeat(rankSpacing)}──┼─{"─".Repeat(nameSpacing)}─┼─{"─".Repeat(eloSpacing)}─┼─{"─".Repeat(winsSpacing)}─┼─{"─".Repeat(lossesSpacing)}─┼─{"─".Repeat(winRateSpacing)}";
+						output += $"\n{"┄".Repeat(rankSpacing)}┄┄┼┄{"┄".Repeat(nameSpacing)}┄┼┄{"┄".Repeat(eloSpacing)}┄┼┄{"┄".Repeat(winsSpacing)}┄┼┄{"┄".Repeat(lossesSpacing)}┄┼┄{"┄".Repeat(winRateSpacing)}";
 						top3 = true;
 					}
 
@@ -140,7 +140,7 @@ namespace Appalachia.Modules
 										   .WithDescription($"Stats for {userFilter.Mention}\n")
 										   .WithFields(new EmbedFieldBuilder[]
 										   {
-											   new EmbedFieldBuilder().WithName("Rank in Server").WithValue(userFilter.GetGuildRpsRank().ToOrdinal()).WithIsInline(false),
+											   new EmbedFieldBuilder().WithName("Rank in Server").WithValue($"{userFilter.GetGuildRpsRank().ToOrdinal()} ({userScore.Elo})").WithIsInline(false),
 											   new EmbedFieldBuilder().WithName("Wins").WithValue(userScore.Wins).WithIsInline(true),
 											   new EmbedFieldBuilder().WithName("Losses").WithValue(userScore.Losses).WithIsInline(true),
 											   new EmbedFieldBuilder().WithName("Win Rate").WithValue($"{userScore.WinRate * 100 : 0.0}%").WithIsInline(true)
@@ -150,7 +150,25 @@ namespace Appalachia.Modules
 
 				await Context.Channel.SendMessageAsync("", false, embed.Build());
 			}
-		}	
+		}
+
+		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + "/Leaderboard")]
+		public async Task RockPaperScissorsLeaderboard([Remainder] string userArg)
+		{
+			await foreach (IReadOnlyCollection<IGuildUser> subcontainer in Context.Guild.GetUsersAsync())
+			{
+				foreach (IGuildUser user in subcontainer)
+				{
+					if ((user.Nickname ?? user.Username).ToLowerInvariant() == userArg.ToLowerInvariant() || user.GetFullUsername().ToLowerInvariant() == userArg.ToLowerInvariant())
+					{
+						await RockPaperScissorsLeaderboard(user as SocketGuildUser); // whats the worst that can happen?? -jolk 2022-03-22
+						return;
+					}
+				}
+			}
+
+			await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
+		}
 
 		[Command("help"), Alias("?"), Name(Source + "/Help")]
 		public async Task HelpCommand()
