@@ -71,7 +71,7 @@ namespace Appalachia.Modules
 					embed.WithColor(GetRollColor(total, min, max, calls));
 				}
 
-				await Context.Message.ReplyAsync("", false, embed.Build(), AllowedMentions.None);
+				await Context.Message.ReplyEmbedAsync(embed);
 			}
 			[Command("roll"), Alias("rng", "random", "rand", "randnum"), Name(Source)]
 			public async Task BasicRng(int max)
