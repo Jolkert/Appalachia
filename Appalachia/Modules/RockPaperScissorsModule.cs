@@ -72,8 +72,6 @@ namespace Appalachia.Modules
 		{
 			if (userFilter == null)
 			{// i actually really dont like this code, but it works so im leaving it at least for now -jolk 2022-03-22
-				await Context.Channel.SendMessageAsync("aint done yet.");
-
 				KeyValuePair<ulong, Server.UserScore>[] leaderboard = Context.Guild.GetRpsLeaderboard();
 
 				(int rank, string user, string elo, string wins, string losses, string winRate)[] userDataStrings = new (int, string, string, string, string, string)[leaderboard.Length];
@@ -155,19 +153,10 @@ namespace Appalachia.Modules
 		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + "/Leaderboard")]
 		public async Task RockPaperScissorsLeaderboard([Remainder] string userArg)
 		{
-			await foreach (IReadOnlyCollection<IGuildUser> subcontainer in Context.Guild.GetUsersAsync())
-			{
-				foreach (IGuildUser user in subcontainer)
-				{
-					if ((user.Nickname ?? user.Username).ToLowerInvariant() == userArg.ToLowerInvariant() || user.GetFullUsername().ToLowerInvariant() == userArg.ToLowerInvariant())
-					{
-						await RockPaperScissorsLeaderboard(user as SocketGuildUser); // whats the worst that can happen?? -jolk 2022-03-22
-						return;
-					}
-				}
-			}
-
-			await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
+			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
+				await RockPaperScissorsLeaderboard(user); // whats the worst that can happen?? -jolk 2022-03-22
+			else
+				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
 		}
 
 		[Command("help"), Alias("?"), Name(Source + "/Help")]

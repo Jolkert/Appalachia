@@ -62,6 +62,20 @@ namespace Appalachia.Utility.Extensions
 		{
 			return $"{channel.Name}({channel.Id})";
 		}
+		public static bool TryGetUser(this IGuild guild, string userArg, out SocketGuildUser user)
+		{
+			foreach (IGuildUser testUser in guild.GetUsersAsync().Result)
+			{
+				if ((testUser.Nickname ?? testUser.Username).ToLowerInvariant() == userArg.ToLowerInvariant() || testUser.GetFullUsername().ToLowerInvariant() == userArg.ToLowerInvariant())
+				{
+					user = testUser as SocketGuildUser; // whats the worst that can happen?? -jolk 2022-03-22
+					return true;
+				}
+			}
+
+			user = null;
+			return false;
+		}
 
 		public static string ToColorString(this Color color, bool withRgb = true)
 		{// i am sorry. i like oneliners too much. i really have to no -jolk 2022-01-06

@@ -41,6 +41,14 @@ namespace Appalachia.Modules
 
 			await Context.Channel.SendMessageAsync("", false, embed.Build());
 		}
+		[Command, Name(Source)]
+		public async Task RandomQuote([Remainder] string userArg)
+		{
+			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
+				await RandomQuote(user);
+			else
+				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
+		}
 
 		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
 		public async Task QuoteLeaderboard(SocketGuildUser userFilter = null, [Remainder] string _ = "")
@@ -79,6 +87,7 @@ namespace Appalachia.Modules
 					// also with the way ive now changed GetQuotes and just how this whole thing works in general, the null propagation/coalesence *shouldnt* actually be necessary? but just in case -jolk 2022-01-05
 
 					embed.WithDescription(embedDescription);
+					embed.WithThumbnailUrl(Context.Guild.IconUrl);
 				}
 				else
 				{
@@ -90,6 +99,14 @@ namespace Appalachia.Modules
 			}
 
 			await Context.Channel.SendMessageAsync("", false, embed.Build());
+		}
+		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
+		public async Task QuoteLeaderboard([Remainder] string userArg)
+		{
+			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
+				await QuoteLeaderboard(user);
+			else
+				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
 		}
 
 		[Command("help"), Alias("?"), Name(Source + "/Help")]
