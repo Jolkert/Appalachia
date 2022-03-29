@@ -37,7 +37,7 @@ namespace Appalachia.Data
 
 		public ulong GetQuoteChannelId(ulong guildId)
 		{
-			return  _data.GetValueOrDefault(guildId)?.QuoteChannelId ?? 0;
+			return _data.GetValueOrDefault(guildId)?.QuoteChannelId ?? 0;
 		}
 		public ulong GetAnnouncementChannelId(ulong guildId)
 		{
@@ -83,7 +83,7 @@ namespace Appalachia.Data
 						.ThenBy(pair => pair.Value.Losses)
 						.ThenBy(pair => pair.Key).ToArray();
 		}
-		
+
 
 		public ModificationResult SetQuoteChannelId(ulong guildId, ulong newQuoteChannelId)
 		{

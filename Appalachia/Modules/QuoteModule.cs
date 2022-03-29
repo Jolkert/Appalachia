@@ -39,7 +39,7 @@ namespace Appalachia.Modules
 							  .WithTimestamp(selectedQuote.Timestamp);
 			}
 
-			await Context.Channel.SendMessageAsync("", false, embed.Build());
+			await Context.Channel.SendEmbedAsync(embed);
 		}
 		[Command, Name(Source)]
 		public async Task RandomQuote([Remainder] string userArg)
@@ -47,7 +47,7 @@ namespace Appalachia.Modules
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
 				await RandomQuote(user);
 			else
-				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
+				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\""));
 		}
 
 		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
@@ -98,7 +98,7 @@ namespace Appalachia.Modules
 				}
 			}
 
-			await Context.Channel.SendMessageAsync("", false, embed.Build());
+			await Context.Channel.SendEmbedAsync(embed);
 		}
 		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
 		public async Task QuoteLeaderboard([Remainder] string userArg)
@@ -106,7 +106,7 @@ namespace Appalachia.Modules
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
 				await QuoteLeaderboard(user);
 			else
-				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
+				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\""));
 		}
 
 		[Command("help"), Alias("?"), Name(Source + "/Help")]
@@ -117,10 +117,10 @@ namespace Appalachia.Modules
 								  "If a user is specified, only gets quotes from that user.";
 			string usage = "<user>";
 
-			await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateHelpEmbed(description, usage, this).Build());
+			await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateHelpEmbed(description, usage, this));
 		}
 
-		private async Task<List<IMessage>> GetQuotes(SocketTextChannel quoteChannel, IUser user = null)
+		private static async Task<List<IMessage>> GetQuotes(SocketTextChannel quoteChannel, IUser user = null)
 		{// Try optimization at your own peril. I've tried so many things. I think either I just dont know how to properly use IAsyncEnumerable, or discord just be slow. prob both -jolk 2022-01-12
 			List<IMessage> quotes = new List<IMessage>();
 			await foreach (IReadOnlyCollection<IMessage> subcontainer in quoteChannel.GetMessagesAsync(int.MaxValue))

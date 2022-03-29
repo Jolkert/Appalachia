@@ -26,7 +26,6 @@ namespace Appalachia.Services
 			StartStream();
 		}
 
-
 		public static void LogToFile(string log)
 		{
 			_writeQueue.Enqueue(log);

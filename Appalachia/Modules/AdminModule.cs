@@ -19,11 +19,11 @@ namespace Appalachia.Modules
 		[Command("announce"), Alias("ann"), Name(Source + "/Announce")]
 		public async Task Announce([Remainder] string message)
 		{
-			await Context.Guild.GetQuoteChannel().SendMessageAsync(message);
+			await Context.Guild.GetAnnouncementChannel().SendMessageAsync(message);
 		}
 
 		[Group("modify"), Alias("mod", "set", "edit", "change"), Name(AdminModule.Source + "/" + Source)]
-		public class ModifyModule : AdminModule 
+		public class ModifyModule : AdminModule
 		{
 			private new const string Source = "Modify";
 
@@ -39,7 +39,7 @@ namespace Appalachia.Modules
 
 				if (!match.Success)
 				{
-					await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Unable convert `{input}` to a color!").Build());
+					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Unable convert `{input}` to a color!"));
 					await Program.LogAsync($"No color regex match found for \"{input}\"", Source);
 				}
 				else
@@ -77,7 +77,7 @@ namespace Appalachia.Modules
 						}
 						catch (OverflowException)
 						{
-							await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed("All RGB values must be between 0 and 255").Build());
+							await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("All RGB values must be between 0 and 255"));
 							return;
 						}
 					}
@@ -95,7 +95,7 @@ namespace Appalachia.Modules
 
 						if (overflow || value > 0xffffff)
 						{
-							await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Raw decimal color value must be between 0 and {0xffffff:#,###}").Build());
+							await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Raw decimal color value must be between 0 and {0xffffff:#,###}"));
 							return;
 						}
 
@@ -136,16 +136,15 @@ namespace Appalachia.Modules
 						break;
 				}
 
-				await Context.Channel.SendMessageAsync("", false, embed.Build());
+				await Context.Channel.SendEmbedAsync(embed);
 			}
-
 
 			[Command("announcements"), Alias("announce", "ann"), Name(AdminModule.Source + "/" + Source + "/Announcements")]
 			public async Task ModifyAnnouncementChannel(SocketTextChannel channel = null)
 			{
 				if (channel == null)
 				{
-					await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed("No channel was specified!").Build());
+					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("No channel was specified!"));
 					await Program.LogAsync("Announcement channel unchanged. No channel was specified.", Source);
 					return;
 				}
@@ -180,7 +179,7 @@ namespace Appalachia.Modules
 						break;
 				}
 
-				await Context.Channel.SendMessageAsync("", false, embed.Build());
+				await Context.Channel.SendEmbedAsync(embed);
 			}
 
 			[Command("quotes"), Alias("quote", "qt"), Name(AdminModule.Source + "/" + Source + "/Quotes")]
@@ -188,7 +187,7 @@ namespace Appalachia.Modules
 			{
 				if (channel == null)
 				{
-					await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed("No channel was specified!").Build());
+					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("No channel was specified!"));
 					await Program.LogAsync("Announcement channel unchanged. No channel was specified.", Source);
 					return;
 				}
@@ -222,9 +221,8 @@ namespace Appalachia.Modules
 						break;
 				}
 
-				await Context.Channel.SendMessageAsync("", false, embed.Build());
+				await Context.Channel.SendEmbedAsync(embed);
 			}
-
 
 			[Group("filter"), Alias("bannedwords", "blacklist"), Name(AdminModule.Source + "/" + ModifyModule.Source + "/" + Source)]
 			public class WordFilterModule : AdminModule
@@ -252,7 +250,7 @@ namespace Appalachia.Modules
 						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
 					}).WithImageUrl(Context.Guild.IconUrl);
 
-					await Context.Channel.SendMessageAsync("", false, embed.Build());
+					await Context.Channel.SendEmbedAsync(embed);
 				}
 				[Command("remove"), Alias("delete", "del")]
 				public async Task RemoveWords([Remainder] string input)
@@ -274,7 +272,7 @@ namespace Appalachia.Modules
 						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
 					}).WithImageUrl(Context.Guild.IconUrl);
 
-					await Context.Channel.SendMessageAsync("", false, embed.Build());
+					await Context.Channel.SendEmbedAsync(embed);
 				}
 				[Command("clear")]
 				public async Task ClearWords()
@@ -293,11 +291,9 @@ namespace Appalachia.Modules
 						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
 					}).WithImageUrl(Context.Guild.IconUrl);
 
-					await Context.Channel.SendMessageAsync("", false, embed.Build());
+					await Context.Channel.SendEmbedAsync(embed);
 				}
 			}
 		}
-
-		
 	}
 }

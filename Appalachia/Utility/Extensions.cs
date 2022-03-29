@@ -21,6 +21,7 @@ namespace Appalachia.Utility.Extensions
 			{Reactions.RpsPaper.Name, ReactionStatus.RpsPaper},
 			{Reactions.RpsScissors.Name, ReactionStatus.RpsScissors}
 		};
+		private const AllowedMentionTypes mentionAll = AllowedMentionTypes.Everyone | AllowedMentionTypes.Users | AllowedMentionTypes.Roles;
 
 		// these used to be in Util, but then i realized that I can just make them extension methods instead -jolk 2022-01-11
 		public static string GetFullUsername(this IUser user)
@@ -75,6 +76,26 @@ namespace Appalachia.Utility.Extensions
 
 			user = null;
 			return false;
+		}
+
+		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, Embed embed)
+		{
+			return await channel.SendMessageAsync("", false, embed);
+		}
+		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, EmbedBuilder embedBuilder)
+		{
+			return await SendEmbedAsync(channel, embedBuilder.Build());
+		}
+		public static async Task<IMessage> ReplyEmbedAsync(this IUserMessage message, Embed embed, bool mention = false)
+		{
+			if (!mention)
+				return await message.ReplyAsync("", false, embed, AllowedMentions.None);
+			else
+				return await message.ReplyAsync("", false, embed, AllowedMentions.All);
+		}
+		public static async Task<IMessage> ReplyEmbedAsync(this IUserMessage message, EmbedBuilder embedBuilder, bool mention = false)
+		{
+			return await ReplyEmbedAsync(message, embedBuilder.Build(), mention);
 		}
 
 		public static string ToColorString(this Color color, bool withRgb = true)
@@ -242,7 +263,7 @@ namespace Appalachia.Utility.Extensions
 		}
 		public static bool IncrementRpsLosses(this SocketGuildUser user)
 		{// see comments on IncrementRpsWins
-			if (user.Guild.Id != 390334803972587530) {}
+			if (user.Guild.Id != 390334803972587530) { }
 
 			return Util.Servers.IncrementRpsLosses(user.Guild.Id, user.Id);
 		}

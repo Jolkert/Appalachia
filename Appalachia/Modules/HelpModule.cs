@@ -1,4 +1,5 @@
 ﻿using Appalachia.Utility;
+using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
 using System;
@@ -13,7 +14,7 @@ namespace Appalachia.Modules
 	{
 		private const string Source = "Help";
 
-		private const string HelpDocUrl = "https://docs.google.com/document/d/190TFz_HNHp1lt4cnq1RdkJGXbYn4cLmO2dS0cXnCT00/edit?usp=sharing";
+		private const string HelpDocUrl = "https://docs.google.com/document/d/190TFz_HNHp1lt4cnq1RdkJGXbYn4cLmO2dS0cXnCT00/edit?usp=sharing"; // I might just use a GitHub wiki actually idk -jolk 2022-03-28
 		private const string OAuthUrl = ""; // remember to add this before release -jolk 2022-01-09
 		private const ulong CreatorId = 227916147540885505;
 
@@ -33,7 +34,7 @@ namespace Appalachia.Modules
 		[Command, Name(Source), Priority(1)]
 		public async Task HelpCommand()
 		{
-			await Context.Channel.SendMessageAsync("", false, embed);
+			await Context.Channel.SendEmbedAsync(embed);
 		}
 
 		[Command, Name(Source)]

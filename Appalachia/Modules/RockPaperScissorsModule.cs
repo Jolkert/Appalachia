@@ -21,8 +21,6 @@ namespace Appalachia.Modules
 		[Command, Name(Source)]
 		public async Task RockPaperScissorsCommand(SocketGuildUser opponent = null, uint firstToScore = 1)
 		{
-			// opponent ??= Context.Guild.GetUser(Program.Client.CurrentUser.Id);
-
 			if (opponent == null)
 			{
 				await HelpCommand();
@@ -37,7 +35,7 @@ namespace Appalachia.Modules
 											.WithDescription($"I accept {Context.User.Mention}\'s challenge!")
 											.WithColor(Context.Guild.GetColor());
 
-					await Context.Channel.SendMessageAsync("", false, embed.Build());
+					await Context.Channel.SendEmbedAsync(embed);
 
 					RpsSelection botSelection = (RpsSelection)(1 << Util.Rand.Next(3));
 					RpsGame gameData = new RpsGame(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore, botSelection);
@@ -49,10 +47,10 @@ namespace Appalachia.Modules
 					await message.AddRpsReactionsAsync();
 				}
 				else //TODO: get a better error message maybe? -jolk 2022-01-07
-					await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed("I am the only bot smart enough to play this game.\nsorry").Build());
+					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("I am the only bot smart enough to play this game.\nsorry"));
 			}
 			else if (Context.User.Id == opponent.Id)
-				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed("You cannot challenge yourself!").Build());
+				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("You cannot challenge yourself!"));
 			else
 			{
 				EmbedBuilder embed = new EmbedBuilder().WithTitle($"{opponent.Nickname ?? opponent.Username}, do you accept the challenge?")
@@ -60,7 +58,7 @@ namespace Appalachia.Modules
 										.WithColor(Context.Guild.GetColor());
 
 
-				IMessage message = await Context.Channel.SendMessageAsync("", false, embed.Build());
+				IMessage message = await Context.Channel.SendEmbedAsync(embed);
 				new RpsChallenge(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore).AddToDatabase(message.Id);
 
 				await message.AddReactionAsync(Reactions.RpsAccept);
@@ -129,7 +127,7 @@ namespace Appalachia.Modules
 					.WithThumbnailUrl(Context.Guild.IconUrl)
 					.WithColor(Context.Guild.GetColor());
 
-				await Context.Channel.SendMessageAsync("", false, embed.Build());
+				await Context.Channel.SendEmbedAsync(embed);
 			}
 			else
 			{
@@ -146,7 +144,7 @@ namespace Appalachia.Modules
 										   .WithColor(Context.Guild.GetColor())
 										   .WithThumbnailUrl(userFilter.GetGuildOrDefaultAvatarUrl());
 
-				await Context.Channel.SendMessageAsync("", false, embed.Build());
+				await Context.Channel.SendEmbedAsync(embed);
 			}
 		}
 
@@ -156,7 +154,7 @@ namespace Appalachia.Modules
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
 				await RockPaperScissorsLeaderboard(user); // whats the worst that can happen?? -jolk 2022-03-22
 			else
-				await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\"").Build());
+				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\""));
 		}
 
 		[Command("help"), Alias("?"), Name(Source + "/Help")]
@@ -165,7 +163,7 @@ namespace Appalachia.Modules
 			string description = "Play rock paper scissors against another user in the server, or this bot.";
 			string usage = "<@user> [first_to_score]";
 
-			await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateHelpEmbed(description, usage, this).Build());
+			await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateHelpEmbed(description, usage, this));
 		}
 	}
 }

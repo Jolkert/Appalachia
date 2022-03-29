@@ -25,21 +25,12 @@ namespace Appalachia.Modules
 				.WithDescription($"{Context.User.Mention}\'s coin landed on **{(Rand.Next(2) == 0 ? "heads" : "tails")}**")
 				.WithColor(Context.Guild.GetColor());
 
-			await Context.Channel.SendMessageAsync("", false, embed.Build());
+			await Context.Channel.SendEmbedAsync(embed);
 		}
 
 		[Command("user"), Alias("somone", "person"), RequireContext(ContextType.Guild), Name(Source + "/User")]
 		public async Task SelectRandomUser([Remainder] string _ = "")
-		{
-			/*SocketVoiceChannel voiceChannel = (Context.User as SocketGuildUser).VoiceChannel;
-			if (voiceChannel == null)
-			{
-				await Context.Channel.SendMessageAsync("", false, Util.GenerateErrorEmbed("You must be in a voice channel\nto use this command!").Build());
-				return;
-			}
-
-			SocketGuildUser selectedUser = voiceChannel.Users.ToArray()[Rand.Next(voiceChannel.Users.Count)];*/
-
+		{// TODO: make a voice channel version -jolk 2022-03-28
 			IAsyncEnumerable<IReadOnlyCollection<IGuildUser>> asyncUsers = Context.Guild.GetUsersAsync();
 			List<IGuildUser> users = new List<IGuildUser>();
 			await foreach (IReadOnlyCollection<IGuildUser> subcontainer in asyncUsers)
@@ -54,10 +45,8 @@ namespace Appalachia.Modules
 				.WithColor(Context.Guild.GetColor())
 				.WithThumbnailUrl(selectedUser.GetGuildOrDefaultAvatarUrl());
 
-			await Context.Channel.SendMessageAsync("", false, embed.Build());
+			await Context.Channel.SendEmbedAsync(embed);
 		}
-
-		
 
 		[Group, Name(RngModule.Source + "/" + Source)]
 		public class RollModule : ModuleBase<SocketCommandContext>, IModuleBase
@@ -105,7 +94,7 @@ namespace Appalachia.Modules
 				Match match = Regex.Match(diceArgument, @"(?<count>\d*)d(?<max>\d+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 				if (!match.Success)
 				{
-					await Context.Channel.SendMessageAsync("", false, EmbedHelper.GenerateErrorEmbed("Could not parse dice format!").Build());
+					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("Could not parse dice format!"));
 					return;
 				}
 
@@ -157,7 +146,7 @@ namespace Appalachia.Modules
 				}
 			}
 		}
-		
+
 		private static (int[] rolls, int total) Rng(int min, int max, int calls = 1)
 		{
 			int[] rolls = new int[calls];
@@ -169,6 +158,4 @@ namespace Appalachia.Modules
 			return (rolls, total);
 		}
 	}
-
-
 }

@@ -118,7 +118,7 @@ namespace Appalachia.Data
 				{ DataKey.ActiveGames, new Dictionary<ulong, RpsChallenge>() }
 			};
 			WriteJson();
-		}	
+		}
 	}
 
 	public class RpsChallenge

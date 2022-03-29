@@ -23,12 +23,11 @@ namespace Appalachia.Modules
 				data.WriteJson();
 			}
 
-			await Context.Channel.SendMessageAsync("", false, new EmbedBuilder()
-																.WithTitle("Reloaded!")
-																.WithDescription("All json data was reloaded!")
-																.WithColor(Colors.Default)
-																.Build());
-		}		
+			await Context.Channel.SendEmbedAsync(new EmbedBuilder()
+													.WithTitle("Reloaded!")
+													.WithDescription("All json data was reloaded!")
+													.WithColor(Colors.Default));
+		}
 
 		[Command("shutdown"), Alias("stop"), Name(Source + "Shutdown")]
 		public async Task Shutdown()
@@ -37,10 +36,7 @@ namespace Appalachia.Modules
 			Program.Stop();
 		}
 
-
-
 		// do i really need either of these commands? i doubt it -jolk 2022-02-15
-
 		[Command("rpsclear"), Name(Source + "/RpsClear")]
 		public async Task RpsClear()
 		{

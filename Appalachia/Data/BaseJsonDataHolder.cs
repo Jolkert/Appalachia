@@ -29,7 +29,7 @@ namespace Appalachia.Data
 
 		protected void ReloadJson(bool verbose = false)
 		{
-			_data  = JsonConvert.DeserializeObject<T>(File.ReadAllText(_fileName), verbose ? _verboseSettings : null);
+			_data = JsonConvert.DeserializeObject<T>(File.ReadAllText(_fileName), verbose ? _verboseSettings : null);
 		}
 		protected void WriteJson(bool verbose = false)
 		{

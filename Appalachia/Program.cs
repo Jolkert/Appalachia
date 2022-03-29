@@ -116,7 +116,7 @@ namespace Appalachia
 					break;
 			}
 
-			await rawChannel.SendMessageAsync("", false, embed.Build());
+			await rawChannel.SendEmbedAsync(embed);
 			Task _;
 			if (accepted)
 				_ = Task.Run(() => SendPvpSelectionMessages(challenger, opponent, challenge));
@@ -180,7 +180,7 @@ namespace Appalachia
 						break;
 				}
 
-				await channel.SendMessageAsync("", false, GenerateRoundResultEmbed(gameData, challenger, opponent, roundWinner).Build());
+				await channel.SendEmbedAsync(GenerateRoundResultEmbed(gameData, challenger, opponent, roundWinner));
 
 				// send match winner if determined
 				// TODO: update leaderboards once they're working -jolk 2022-01-10
@@ -190,7 +190,7 @@ namespace Appalachia
 				{
 					// there has to be a more sensible way to do this than this. it looks stupid but i dont feel like trying to make it better so this is what we got yall -jolk 2022-02-14	
 					case RpsWinner.Challenger:
-						
+
 						gameData.RemoveFromDatabase();
 						if (!isBotMatch)
 						{
@@ -200,7 +200,7 @@ namespace Appalachia
 							previousElos = Util.Servers.UpdateElo(challenger, opponent);
 						}
 
-						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, challenger, opponent, previousElos).Build());
+						await channel.SendEmbedAsync(GenerateMatchResultEmbed(gameData, challenger, opponent, previousElos));
 						break;
 
 					case RpsWinner.Opponent:
@@ -213,7 +213,7 @@ namespace Appalachia
 							previousElos = Util.Servers.UpdateElo(opponent, challenger);
 						}
 
-						await channel.SendMessageAsync($"", false, GenerateMatchResultEmbed(gameData, opponent, challenger, previousElos).Build());
+						await channel.SendEmbedAsync(GenerateMatchResultEmbed(gameData, opponent, challenger, previousElos));
 						break;
 
 					default:
@@ -245,7 +245,7 @@ namespace Appalachia
 			Task[] tasks = new Task[]
 			{
 					Task.Run(async () =>
-					{ 
+					{
 						challengerMessage = await challenger.SendMessageAsync("[Please wait...]");
 						Task _ =  challengerMessage.AddRpsReactionsAsync();
 					}),
@@ -270,14 +270,13 @@ namespace Appalachia
 					msg.Embed = GenerateSelectionMessageEmbed(gameData, challenger).Build();
 				}));
 		}
-		public static async Task<RestUserMessage> SendBotSelectionMessage(ISocketMessageChannel channel, IUser challenger, RpsGame gameData)
-		{
-			return await channel.SendMessageAsync("", false, new EmbedBuilder().WithTitle($"Round {gameData.RoundCount} vs {challenger.Username}")
+		public static async Task<IMessage> SendBotSelectionMessage(ISocketMessageChannel channel, IUser challenger, RpsGame gameData)
+		{// hey if something goes fucky check here first lol -jolk 2022-03-28
+			return await channel.SendEmbedAsync(new EmbedBuilder().WithTitle($"Round {gameData.RoundCount} vs {challenger.Username}")
 																	  .WithDescription($"{challenger.Mention}, select rock, paper, or scissors")
 																	  .WithColor(gameData.MatchId)
 																	  .WithThumbnailUrl(challenger.GetGuildOrDefaultAvatarUrl())
-																	  .WithFooter($"Match ID: #{gameData.MatchId:x6}")
-																	  .Build());
+																	  .WithFooter($"Match ID: #{gameData.MatchId:x6}"));
 		}
 
 		private static EmbedBuilder GenerateMatchResultEmbed(RpsGame gameData, SocketGuildUser winner, SocketGuildUser loser, (int winner, int loser) previousElos)
@@ -341,7 +340,7 @@ namespace Appalachia
 				{
 					await LogAsync($"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source);
 				}
-				
+
 			}
 		}
 
@@ -383,7 +382,6 @@ namespace Appalachia
 				Logger.Close();
 			Environment.Exit(Environment.ExitCode);
 		}
-
 
 
 		private static ServiceProvider ConfigureServices()
