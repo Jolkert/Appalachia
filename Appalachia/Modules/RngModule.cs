@@ -2,6 +2,7 @@
 using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,22 +29,34 @@ namespace Appalachia.Modules
 			await Context.Channel.SendEmbedAsync(embed);
 		}
 
-		[Command("user"), Alias("somone", "person"), RequireContext(ContextType.Guild), Name(Source + "/User")]
-		public async Task SelectRandomUser([Remainder] string _ = "")
+		[Command("randomuser"), Alias("someone", "person", "randuser", "user"), RequireContext(ContextType.Guild), Name(Source + "/User")]
+		public async Task SelectRandomUser(string arg = "", [Remainder] string _ = "") // i really dont want to make a subcommand. im just gonna use this lmao -jolk 2022-04-19
 		{// TODO: make a voice channel version -jolk 2022-03-28
-			IAsyncEnumerable<IReadOnlyCollection<IGuildUser>> asyncUsers = Context.Guild.GetUsersAsync();
-			List<IGuildUser> users = new List<IGuildUser>();
-			await foreach (IReadOnlyCollection<IGuildUser> subcontainer in asyncUsers)
-				foreach (IGuildUser user in subcontainer.Where(usr => !usr.IsBot))
-					users.Add(user);
+			if (Context.User is not SocketGuildUser contextUser) // i dont think you ever really need this but sure -jolk 2022-04-21
+				return;
+			
+			IGuildUser selectedUser;
+			if (contextUser.VoiceChannel == null || Regex.IsMatch(arg, @"server|sv|s|guild|gld|gd|g", RegexOptions.IgnoreCase))
+			{
+				IAsyncEnumerable<IReadOnlyCollection<IGuildUser>> asyncUsers = Context.Guild.GetUsersAsync();
+				List<IGuildUser> users = new List<IGuildUser>();
+				await foreach (IReadOnlyCollection<IGuildUser> subcontainer in asyncUsers)
+					foreach (IGuildUser user in subcontainer.Where(usr => !usr.IsBot))
+						users.Add(user);
 
-			IGuildUser selectedUser = users[Rand.Next(users.Count)];
+				selectedUser = users[Rand.Next(users.Count)];
+			}
+			else 
+			{
+				SocketGuildUser[] users = contextUser.VoiceChannel.Users.Where(usr => !usr.IsBot).ToArray();
+				selectedUser = users[Rand.Next(users.Length)];
+			}
 
 			EmbedBuilder embed = new EmbedBuilder()
-				.WithTitle("RNGesus says:")
-				.WithDescription($"I have chosen\n{selectedUser.Mention}")
-				.WithColor(Context.Guild.GetColor())
-				.WithThumbnailUrl(selectedUser.GetGuildOrDefaultAvatarUrl());
+					.WithTitle("RNGesus says:")
+					.WithDescription($"I have chosen\n{selectedUser.Mention}")
+					.WithColor(Context.Guild.GetColor())
+					.WithThumbnailUrl(selectedUser.GetGuildOrDefaultAvatarUrl());
 
 			await Context.Channel.SendEmbedAsync(embed);
 		}
