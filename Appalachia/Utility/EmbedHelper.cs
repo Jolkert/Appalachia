@@ -17,7 +17,7 @@ namespace Appalachia.Utility
 				.WithColor(Colors.Error)
 				.WithFooter("Need to report a bug? Contact my creator at Jolkert#2991");
 		}
-		public static EmbedBuilder GenerateHelpEmbed(string description, string usage, IModuleWithHelp module)
+		public static EmbedBuilder GenerateHelpEmbed(string description, string usage, ModuleWithHelp module)
 		{
 			ModuleInfo foundModule = CommandHandler.Commands.Modules.Where(mod => mod.Name == module.ModuleName).FirstOrDefault();
 			string mainAlias = foundModule?.Aliases[0];

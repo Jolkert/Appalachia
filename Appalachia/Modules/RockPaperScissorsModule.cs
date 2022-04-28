@@ -12,18 +12,19 @@ using System.Threading.Tasks;
 namespace Appalachia.Modules
 {
 	[Group("rps"), RequireContext(ContextType.Guild), Name(Source)]
-	public class RockPaperScissorsModule : ModuleBase<SocketCommandContext>, IModuleBase, IModuleWithHelp
+	public class RockPaperScissorsModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
 		public const string Source = "Rock Paper Scissors";
-		public string ModuleName => Source;
 
 		// TODO: theres a bunch of stuff going on here. a bunch of the message sending stuff should probably be refactored for cleanup. but like. not rn -jolk 2022-01-10
+		// hey idiot. what did this mean? ive literally forgotten what this TODO was referring to. no idea if ive already done it. whelp -jolk 2022-04-27
+
 		[Command, Name(Source)]
 		public async Task RockPaperScissorsCommand(SocketGuildUser opponent = null, uint firstToScore = 1)
 		{
 			if (opponent == null)
 			{
-				await HelpCommand();
+				// await HelpCommand();
 				return;
 			}
 
@@ -65,7 +66,7 @@ namespace Appalachia.Modules
 				await message.AddReactionAsync(Reactions.RpsDeny);
 			}
 		}
-		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + "/Leaderboard")]
+		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + " lb")]
 		public async Task RockPaperScissorsLeaderboard(SocketGuildUser userFilter = null)
 		{
 			if (userFilter == null)
@@ -148,22 +149,13 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + "/Leaderboard")]
+		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + "/lb")]
 		public async Task RockPaperScissorsLeaderboard([Remainder] string userArg)
 		{
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
 				await RockPaperScissorsLeaderboard(user); // whats the worst that can happen?? -jolk 2022-03-22
 			else
 				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\""));
-		}
-
-		[Command("help"), Alias("?"), Name(Source + "/Help")]
-		public async Task HelpCommand()
-		{
-			string description = "Play rock paper scissors against another user in the server, or this bot.";
-			string usage = "<@user> [first_to_score]";
-
-			await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateHelpEmbed(description, usage, this));
 		}
 	}
 }

@@ -41,6 +41,8 @@ namespace Appalachia
 			using ServiceProvider services = ConfigureServices();
 
 			await LogAsync($"Starting Appalachia v{Version}", "Startup");
+			if (Version.Contains("dev"))
+				await LogAsync("This is a development build, and will likely have bugs!", Source, LogSeverity.Debug);
 			Client = services.GetRequiredService<DiscordSocketClient>();
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
@@ -365,7 +367,18 @@ namespace Appalachia
 
 		private static Task LogAsync(LogMessage log)
 		{
-			string write = $"[{log.Severity}] {log.ToString()}";
+			Console.ForegroundColor = log.Severity switch
+			{
+				LogSeverity.Debug => ConsoleColor.Magenta,
+				LogSeverity.Warning => ConsoleColor.Yellow,
+				LogSeverity.Error => ConsoleColor.Red,
+				LogSeverity.Critical => ConsoleColor.DarkRed,
+				LogSeverity.Verbose => ConsoleColor.Green,
+				LogSeverity.Info => ConsoleColor.White,
+				_ => ConsoleColor.White
+			};
+
+			string write = $"{String.Format("{0, -10}", $"[{log.Severity}]")} {log.ToString()}";
 			Console.WriteLine(write);
 			if (Config.Settings.OutputLogsToFile)
 				Logger.LogToFile(write);

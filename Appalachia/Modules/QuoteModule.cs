@@ -11,10 +11,9 @@ using System.Threading.Tasks;
 namespace Appalachia.Modules
 {
 	[Group("quote"), Alias("qt"), RequireContext(ContextType.Guild), Name(Source)]
-	public class QuoteModule : ModuleBase<SocketCommandContext>, IModuleBase, IModuleWithHelp
+	public class QuoteModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
 		private const string Source = "Quote";
-		public string ModuleName => Source;
 
 		[Command, Name(Source)]
 		public async Task RandomQuote(SocketGuildUser userFilter = null, [Remainder] string _ = "")
@@ -107,17 +106,6 @@ namespace Appalachia.Modules
 				await QuoteLeaderboard(user);
 			else
 				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\""));
-		}
-
-		[Command("help"), Alias("?"), Name(Source + "/Help")]
-		public async Task HelpCommand()
-		{
-			SocketTextChannel quotesChannel = Context.Guild.GetQuoteChannel();
-			string description = $"Pulls a random quote from the quote channel ({quotesChannel?.Mention ?? "not specified in this server"}).\n" +
-								  "If a user is specified, only gets quotes from that user.";
-			string usage = "<user>";
-
-			await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateHelpEmbed(description, usage, this));
 		}
 
 		private static async Task<List<IMessage>> GetQuotes(SocketTextChannel quoteChannel, IUser user = null)
