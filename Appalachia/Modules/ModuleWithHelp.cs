@@ -1,4 +1,7 @@
-﻿using Discord.Commands;
+﻿using Appalachia.Utility;
+using Appalachia.Utility.Extensions;
+using Discord;
+using Discord.Commands;
 using System.Threading.Tasks;
 
 namespace Appalachia.Modules
@@ -9,12 +12,15 @@ namespace Appalachia.Modules
 		// TODO: completely rework the command naming scheme. no idea how exactly im gonna do that, but the current system is ultra garbage -jolk 2022-04-19
 
 		public abstract string ModuleName { get; }
-
-		// not entirely certain if this is how im gonna do this, but i think it makes sense?
 		public abstract string Description { get; }
-		public abstract string Usage { get; }
+		public abstract string Usage { get; } // make sure to take the command name itself out of this thanks
 
-		[Command("help"), Alias("?")] // does this do anything? i doubt it
-		public abstract Task HelpCommand();
+		[Command("help"), Alias("?"), Priority(int.MaxValue)] // does this do anything? i doubt it; update: apparently it does! -jolk 2022-04-28
+		public async Task HelpCommand()
+		{
+			await Program.LogAsync($"Getting help command from {this.GetType().Name}", ModuleName, LogSeverity.Debug);
+			(string mainAlias, EmbedBuilder embed) = EmbedHelper.GenerateHelpEmbed(this);
+			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder("Need more help?", null, ButtonStyle.Link, $"{HelpModule.WikiUrl}#{mainAlias}", new Emoji("❓")));
+		}
 	}
 }

@@ -11,9 +11,13 @@ using System.Threading.Tasks;
 namespace Appalachia.Modules
 {
 	[Group("quote"), Alias("qt"), RequireContext(ContextType.Guild), Name(Source)]
-	public class QuoteModule : ModuleBase<SocketCommandContext>, IModuleBase
+	public class QuoteModule : ModuleWithHelp
 	{
 		private const string Source = "Quote";
+
+		public override string ModuleName => Source;
+		public override string Description => "If a channel in the server is designated as the quotes channel, get a random quote";
+		public override string Usage => "[@user*]";
 
 		[Command, Name(Source)]
 		public async Task RandomQuote(SocketGuildUser userFilter = null, [Remainder] string _ = "")

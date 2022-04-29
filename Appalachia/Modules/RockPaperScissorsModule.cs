@@ -12,12 +12,18 @@ using System.Threading.Tasks;
 namespace Appalachia.Modules
 {
 	[Group("rps"), RequireContext(ContextType.Guild), Name(Source)]
-	public class RockPaperScissorsModule : ModuleBase<SocketCommandContext>, IModuleBase
+	public class RockPaperScissorsModule : ModuleWithHelp
 	{
 		public const string Source = "Rock Paper Scissors";
 
+		public override string ModuleName => Source;
+		public override string Description => "Challenge a user to a Rock Paper Scissors match";
+		public override string Usage => "<@user> [first_to]";
+
 		// TODO: theres a bunch of stuff going on here. a bunch of the message sending stuff should probably be refactored for cleanup. but like. not rn -jolk 2022-01-10
 		// hey idiot. what did this mean? ive literally forgotten what this TODO was referring to. no idea if ive already done it. whelp -jolk 2022-04-27
+
+		// might want to redo all of this with buttons instead of reactions? would certainly make life a decent bit easier. idk we'll see. just wanna get 2.0 out first -jolk 2022-04-28
 
 		[Command, Name(Source)]
 		public async Task RockPaperScissorsCommand(SocketGuildUser opponent = null, uint firstToScore = 1)

@@ -78,13 +78,25 @@ namespace Appalachia.Utility.Extensions
 			return false;
 		}
 
-		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, Embed embed)
+		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, Embed embed, ButtonBuilder[] buttons)
 		{
-			return await channel.SendMessageAsync("", false, embed);
+			ComponentBuilder component = null;
+			if (buttons != null)
+			{
+				component = new ComponentBuilder();
+				foreach (ButtonBuilder button in buttons)
+					component = component.WithButton(button);
+			}
+
+			return await channel.SendMessageAsync("", false, embed, null, null, null, component?.Build());
 		}
-		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, EmbedBuilder embedBuilder)
+		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, EmbedBuilder embedBuilder, ButtonBuilder[] buttons = null)
 		{
-			return await SendEmbedAsync(channel, embedBuilder.Build());
+			return await SendEmbedAsync(channel, embedBuilder.Build(), buttons);
+		}
+		public static async Task<IMessage> SendEmbedAsync(this IMessageChannel channel, EmbedBuilder embedBuilder, ButtonBuilder button)
+		{
+			return await SendEmbedAsync(channel, embedBuilder, new ButtonBuilder[] { button });
 		}
 		public static async Task<IMessage> ReplyEmbedAsync(this IUserMessage message, Embed embed, bool mention = false)
 		{

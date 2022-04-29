@@ -4,7 +4,6 @@ using Appalachia.Utility;
 using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
-using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -369,12 +368,12 @@ namespace Appalachia
 		{
 			Console.ForegroundColor = log.Severity switch
 			{
+				LogSeverity.Info => ConsoleColor.White,
 				LogSeverity.Debug => ConsoleColor.Magenta,
 				LogSeverity.Warning => ConsoleColor.Yellow,
 				LogSeverity.Error => ConsoleColor.Red,
 				LogSeverity.Critical => ConsoleColor.DarkRed,
 				LogSeverity.Verbose => ConsoleColor.Green,
-				LogSeverity.Info => ConsoleColor.White,
 				_ => ConsoleColor.White
 			};
 
@@ -382,6 +381,8 @@ namespace Appalachia
 			Console.WriteLine(write);
 			if (Config.Settings.OutputLogsToFile)
 				Logger.LogToFile(write);
+
+			Console.ResetColor();
 			return Task.CompletedTask;
 		}
 		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
