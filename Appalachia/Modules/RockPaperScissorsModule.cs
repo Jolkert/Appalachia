@@ -30,7 +30,7 @@ namespace Appalachia.Modules
 		{
 			if (opponent == null)
 			{
-				// await HelpCommand();
+				await this.HelpCommand();
 				return;
 			}
 
