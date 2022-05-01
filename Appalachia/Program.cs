@@ -20,9 +20,26 @@ namespace Appalachia
 		public const string Version = "2.0.0-dev"; // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
 		private static readonly Logger Logger = new Logger();
+		private static readonly DailyTrigger MidnightTrigger = new DailyTrigger();
 		public static readonly BotConfig Config = new BotConfig();
 
-		static void Main() => new Program().StartAsync().GetAwaiter().GetResult();
+		static void Main()
+		{
+			try
+			{
+				new Program().StartAsync().GetAwaiter().GetResult();
+			}
+			catch (Exception exception)
+			{// if theres an exception we want to log it to the file and just rethrow it -jolk 2022-05-01
+				LogAsync(exception.ToString(), Source, LogSeverity.Critical);
+				throw;
+			}
+			finally
+			{// this way if theres an error thrown, we still close the logger to make sure everything is good here -jolk 2022-05-01
+				if (Config?.Settings.OutputLogsToFile ?? true)
+					Logger.Close();
+			}
+		}
 
 		public async Task StartAsync()
 		{
@@ -32,7 +49,7 @@ namespace Appalachia
 				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json", "Startup");
 				Stop();
 			}
-			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == String.Empty)
+			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
 			{
 				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json", "Startup");
 				Stop();
@@ -55,6 +72,7 @@ namespace Appalachia
 			await Client.StartAsync();
 			await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
+			MidnightTrigger.TimeTriggered += Logger.Restart;
 			await Task.Delay(-1);
 		}
 
@@ -388,7 +406,7 @@ namespace Appalachia
 		}
 		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
 		{
-			return LogAsync(new LogMessage(severity, source, message));
+			return LogAsync(new LogMessage(severity, source, message.Replace("\n", "\\n")));
 		}
 
 		public static void Stop()

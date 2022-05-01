@@ -16,9 +16,11 @@ namespace Appalachia.Services
 		private readonly Queue<string> _writeQueue; // We use the queue to prevent collisions
 		private readonly ThreadStart _writeThreadStart;
 		private Thread _writeThread;
+		private bool _isOpen;
 
 		public Logger()
 		{
+			_isOpen = false;
 			_writeThreadStart = new ThreadStart(() =>
 			{
 				while (_writeQueue.Count > 0)
@@ -31,28 +33,27 @@ namespace Appalachia.Services
 		public void LogToFile(string log)
 		{
 			_writeQueue.Enqueue(log);
-			if (_writeThread == null || _writeThread.ThreadState == ThreadState.Stopped)
-			{
-				_writeThread = new Thread(_writeThreadStart);
-				_writeThread.Start();
-			}
+			if (_isOpen && (_writeThread == null || _writeThread.ThreadState == ThreadState.Stopped))
+				StartWriteThread();
 		}
 		private void LogToFileFromQueue()
 		{
-			_stream.Write(Encoding.UTF8.GetBytes($"{_writeQueue.Dequeue()}\n"));
+			if (_isOpen)
+				_stream.Write(Encoding.UTF8.GetBytes($"{_writeQueue.Dequeue()}\n"));
 			RestartStream();
 		}
 
 		public void Close()
 		{
-			_writeThread.Join();
+			_isOpen = false;
+			_writeThread?.Join();
 			_stream.Close();
 		}
 		public void Restart()
 		{
 			Close();
 			StartStream();
-		}	
+		}
 
 		private void StartStream()
 		{
@@ -72,13 +73,33 @@ namespace Appalachia.Services
 
 			_logFile = $"{_folderPath}/{fileName}.log";
 			_stream = new FileStream(_logFile, FileMode.Append);
+			_isOpen = true;
 
-			_stream.Write(Encoding.UTF8.GetBytes($"Starting Log: {fileName}\n"));
+			_stream.Write(Encoding.UTF8.GetBytes($"Starting Log: {fileName} ({DateTime.Now:HH:mm:ss.fff})\n"));
+			if (_writeQueue.Count > 0)
+				StartWriteThread();
 		}
 		private void RestartStream()
 		{
+			_isOpen = false;
 			_stream.Close();
-			_stream = new FileStream(_logFile, FileMode.Append);
+
+			// so like. this try block is a *really* stupid solution, but im sure it wont cause any problems at all right? -jolk 2022-05-01
+			try
+			{
+				_stream = new FileStream(_logFile, FileMode.Append);
+			}
+			catch (IOException) { }
+
+			_isOpen = true;
+			if (_writeQueue.Count > 0)
+				StartWriteThread();
+		}
+
+		private void StartWriteThread()
+		{
+			_writeThread = new Thread(_writeThreadStart);
+			_writeThread.Start();
 		}
 	}
 }
