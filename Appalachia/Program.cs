@@ -19,6 +19,7 @@ namespace Appalachia
 		public static DiscordSocketClient Client;
 		public const string Version = "2.0.0-dev"; // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
+		private static readonly Logger Logger = new Logger();
 		public static readonly BotConfig Config = new BotConfig();
 
 		static void Main() => new Program().StartAsync().GetAwaiter().GetResult();
@@ -377,7 +378,7 @@ namespace Appalachia
 				_ => ConsoleColor.White
 			};
 
-			string write = $"{String.Format("{0, -10}", $"[{log.Severity}]")} {log.ToString()}";
+			string write = $"{string.Format("{0, -10}", $"[{log.Severity}]")} {log.ToString()}";
 			Console.WriteLine(write);
 			if (Config.Settings.OutputLogsToFile)
 				Logger.LogToFile(write);
