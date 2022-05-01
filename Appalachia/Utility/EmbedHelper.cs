@@ -26,7 +26,6 @@ namespace Appalachia.Utility
 			List<EmbedFieldBuilder> fields = new List<EmbedFieldBuilder>();
 			fields.Add(new EmbedFieldBuilder().WithName("Usage").WithValue($"`{Program.Config.Settings.CommandPrefix}{mainAlias} {module.Usage}`").WithIsInline(false));
 
-			Program.LogAsync($"Aliases count: {aliases?.Count().ToString() ?? "NULL"}", module.ModuleName, LogSeverity.Debug);
 			if (aliases != null && aliases.Count() > 1)
 				fields.Add(new EmbedFieldBuilder().WithName("Aliases").WithValue(string.Join(", ", aliases.Where(str => str != mainAlias).Select(str => $"`{str}`"))).WithIsInline(false));
 

@@ -18,7 +18,6 @@ namespace Appalachia.Modules
 		[Command("help"), Alias("?"), Priority(int.MaxValue)] // does this do anything? i doubt it; update: apparently it does! -jolk 2022-04-28
 		public async Task HelpCommand()
 		{
-			await Program.LogAsync($"Getting help command from {this.GetType().Name}", ModuleName, LogSeverity.Debug);
 			(string mainAlias, EmbedBuilder embed) = EmbedHelper.GenerateHelpEmbed(this);
 			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder("Need more help?", null, ButtonStyle.Link, $"{HelpModule.WikiUrl}#{mainAlias}", new Emoji("❓")));
 		}

@@ -3,6 +3,7 @@ using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -36,24 +37,25 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Group("randomuser"), Alias("someone", "person", "randuser", "user"), RequireContext(ContextType.Guild), Name(Source + "/User")]
+		[Group("randomuser"), Alias("randuser", "user", "someone", "person"), RequireContext(ContextType.Guild), Name(Source)]
 		public class RandomUserModule : ModuleWithHelp
 		{
 			private const string Source = "Random User";
 
 			public override string ModuleName => Source;
-			// TODO: add Description and Usage
-			public override string Description => "";
-			public override string Usage => "";
+			public override string Description => "Selects a random user. If you are not in a voice channel, or use the `--server` flag while in a voice channel, " +
+												  "any non-bot user in the server may be selected. If you are in a voice channel and do not use the `--server` flag, any non-bot user " +
+												  "in the voice channel may be selected";
+			public override string Usage => "[-s|--server]";
 
 			[Command]
-			public async Task SelectRandomUser(string arg = "", [Remainder] string _ = "") // i really dont want to make a subcommand. im just gonna use this lmao -jolk 2022-04-19
-			{// TODO: make a voice channel version -jolk 2022-03-28
+			public async Task SelectRandomUser(string flag = "") // i really dont want to make a subcommand. im just gonna use this lmao -jolk 2022-04-19
+			{
 				if (Context.User is not SocketGuildUser contextUser) // i dont think you ever really need this but sure -jolk 2022-04-21
 					return;
 
 				IGuildUser selectedUser;
-				if (contextUser.VoiceChannel == null || Regex.IsMatch(arg, @"server|sv|s|guild|gld|gd|g", RegexOptions.IgnoreCase))
+				if (contextUser.VoiceChannel == null || Regex.IsMatch(flag, @"(\b|^)(-s|--server)(\b|$)", RegexOptions.IgnoreCase))
 				{
 					IAsyncEnumerable<IReadOnlyCollection<IGuildUser>> asyncUsers = Context.Guild.GetUsersAsync();
 					List<IGuildUser> users = new List<IGuildUser>();
