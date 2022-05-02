@@ -54,12 +54,15 @@ namespace Appalachia
 				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json", "Startup", LogSeverity.Critical);
 				Stop();
 			}
+			if (!Config.Settings.OutputLogsToFile)
+				await LogAsync("OutputLogsToFile false in config. Logs of bot activity will not be saved!", "Startup", LogSeverity.Info);
+
 
 			using ServiceProvider services = ConfigureServices();
 
 			await LogAsync($"Starting Appalachia v{Version}", "Startup");
 			if (Version.Contains("dev"))
-				await LogAsync("This is a development build, and will likely have bugs!", Source, LogSeverity.Debug);
+				await LogAsync("This is a development build, and will likely have bugs!", "Startup", LogSeverity.Debug);
 			Client = services.GetRequiredService<DiscordSocketClient>();
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
