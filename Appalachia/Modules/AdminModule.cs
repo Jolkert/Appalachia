@@ -14,6 +14,7 @@ namespace Appalachia.Modules
 	[Group("admin"), Name(Source), RequireContext(ContextType.Guild), RequireUserPermission(ChannelPermission.ManageChannels)]
 	public class AdminModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
+		// TODO: probably rework most of this now that I know how the help command is gonna work. its gonna be a pain and im currently several thousand feet in the air. i'll come back to it -jolk 2022-05-02
 		private const string Source = "Admin";
 
 		[Command("announce"), Alias("ann"), Name(Source + "/Announce")]
@@ -224,6 +225,7 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
+			// TODO: add a modifier for ShouldMatchSubstitutions -jolk 2022-05-02
 			[Group("filter"), Alias("bannedwords", "blacklist"), Name(AdminModule.Source + "/" + ModifyModule.Source + "/" + Source)]
 			public class WordFilterModule : AdminModule
 			{
