@@ -46,12 +46,12 @@ namespace Appalachia
 			// should i prompt for this instead of just returning? eh. probably -jolk 2022-01-09
 			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
 			{
-				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json", "Startup");
+				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json", "Startup", LogSeverity.Critical);
 				Stop();
 			}
 			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
 			{
-				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json", "Startup");
+				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json", "Startup", LogSeverity.Critical);
 				Stop();
 			}
 
@@ -110,7 +110,7 @@ namespace Appalachia
 			if (rawChannel is not SocketTextChannel channel) // in practice this should never happen? but like. just in case -jolk 2022-01-10
 				return;
 
-			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]", Source);
+			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]", Source, LogSeverity.Verbose);
 
 			SocketGuildUser challenger = channel.Guild.GetUser(challenge.PlayerIds.Challenger);
 			SocketGuildUser opponent = channel.Guild.GetUser(challenge.PlayerIds.Opponent);
@@ -132,7 +132,7 @@ namespace Appalachia
 
 				default:
 					embed = EmbedHelper.GenerateErrorEmbed("This isn\'t supposed to happen.\nIf you see this something has gone terribly wrong.");
-					await LogAsync("If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation", Source);
+					await LogAsync("If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation", Source, LogSeverity.Error);
 					break;
 			}
 
@@ -148,7 +148,8 @@ namespace Appalachia
 			// im wondering if i should like. take a break to clear my brain. ive been staring at vs for too long. im starting to feel the brainpower leaving my soul
 			// and like. i really *shouldnt* write this method in particular in this state. yea im gonna take a break -jolk 2022-01-09 (01:49)
 
-			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]", Source);
+			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]",
+							Source, LogSeverity.Verbose);
 
 			bool isBotMatch = gameData.PlayerIds.Contains(Client.CurrentUser.Id);
 			bool userIsChallenger = reaction.UserId == gameData.PlayerIds.Challenger;
@@ -161,14 +162,14 @@ namespace Appalachia
 				RpsSelection userSelection = status.GetUserSelection();
 
 				gameData.SetChallengerSelection(userSelection);
-				await LogAsync($"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})", Source);
+				await LogAsync($"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})", Source, LogSeverity.Verbose);
 			}
 			else
 			{
 				RpsSelection userSelection = status.GetUserSelection();
 
 				gameData.SetOpponentSelection(userSelection);
-				await LogAsync($"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})", Source);
+				await LogAsync($"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})", Source, LogSeverity.Verbose);
 			}
 
 			// i cant. see above comment. i need to rest my brain. ill do the rest later -jolk 2022-01-09
@@ -242,7 +243,7 @@ namespace Appalachia
 							SendPvpSelectionMessages(challenger, opponent, gameData);
 						else
 						{
-							await LogAsync($"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]", Source);
+							await LogAsync($"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]", Source, LogSeverity.Verbose);
 							Task _ = (await SendBotSelectionMessage(channel, challenger, gameData)).AddRpsReactionsAsync();
 						}
 						break;
@@ -358,7 +359,7 @@ namespace Appalachia
 				}
 				catch (Discord.Net.HttpException)
 				{
-					await LogAsync($"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source);
+					await LogAsync($"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source, LogSeverity.Error);
 				}
 
 			}

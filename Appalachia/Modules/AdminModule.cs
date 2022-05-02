@@ -117,14 +117,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							.WithDescription($"Server color for {Context.Guild.Name}\nis now **{newColor.ToColorString()}**");
 
-						await Program.LogAsync($"Color of {Context.Guild.GetNameWithId()} changed to {newColor.ToColorString(false)}!", Source);
+						await Program.LogAsync($"Color of {Context.Guild.GetNameWithId()} changed to {newColor.ToColorString(false)}!", Source, LogSeverity.Verbose);
 						break;
 
 					case ServerData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							.WithDescription($"Server color for {Context.Guild.Name}\nis already **{newColor.ToColorString()}**");
 
-						await Program.LogAsync($"Color of {Context.Guild.GetNameWithId()} was already {newColor.ToColorString(false)}!", Source);
+						await Program.LogAsync($"Color of {Context.Guild.GetNameWithId()} was already {newColor.ToColorString(false)}!", Source, LogSeverity.Verbose);
 						break;
 
 					default:
@@ -132,7 +132,7 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						await Program.LogAsync("This message should never appear. If you see this something\'s up with the announcement channel modify command.", Source, LogSeverity.Warning);
+						await Program.LogAsync("This message should never appear. If you see this something\'s up with the announcement channel modify command.", Source, LogSeverity.Error);
 						break;
 				}
 
@@ -145,7 +145,7 @@ namespace Appalachia.Modules
 				if (channel == null)
 				{
 					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("No channel was specified!"));
-					await Program.LogAsync("Announcement channel unchanged. No channel was specified.", Source);
+					await Program.LogAsync("Announcement channel unchanged. No channel was specified.", Source, LogSeverity.Verbose);
 					return;
 				}
 
@@ -160,14 +160,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Announcement channel for {Context.Guild.Name}\nis now {channel.Mention}");
 
-						await Program.LogAsync($"Announcement channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!", Source);
+						await Program.LogAsync($"Announcement channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!", Source, LogSeverity.Verbose);
 						break;
 
 					case ServerData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{channel.Mention} is already the announcement channel\nin {Context.Guild.Name}");
 
-						await Program.LogAsync($"Announcement channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!", Source);
+						await Program.LogAsync($"Announcement channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!", Source, LogSeverity.Verbose);
 						break;
 
 					default:
@@ -175,7 +175,7 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						await Program.LogAsync("This message should never appear. If you see this something\'s up with the announcement channel modify command.", Source, LogSeverity.Warning);
+						await Program.LogAsync("This message should never appear. If you see this something\'s up with the announcement channel modify command.", Source, LogSeverity.Error);
 						break;
 				}
 
@@ -188,7 +188,7 @@ namespace Appalachia.Modules
 				if (channel == null)
 				{
 					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("No channel was specified!"));
-					await Program.LogAsync("Announcement channel unchanged. No channel was specified.", Source);
+					await Program.LogAsync("Quote channel unchanged. No channel was specified.", Source, LogSeverity.Verbose);
 					return;
 				}
 
@@ -202,14 +202,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Quotes channel for {Context.Guild.Name}\nis now {channel.Mention}");
 
-						await Program.LogAsync($"Quote channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!", Source);
+						await Program.LogAsync($"Quote channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!", Source, LogSeverity.Verbose);
 						break;
 
 					case ServerData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{channel.Mention} is already the quotes channel\nin {Context.Guild.Name}");
 
-						await Program.LogAsync($"Quote channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!", Source);
+						await Program.LogAsync($"Quote channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!", Source, LogSeverity.Verbose);
 						break;
 
 					default:
@@ -217,7 +217,7 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						await Program.LogAsync("This message should never appear. If you see this something\'s up with the quote channel modify command.", Source, LogSeverity.Warning);
+						await Program.LogAsync("This message should never appear. If you see this something\'s up with the quote channel modify command.", Source, LogSeverity.Error);
 						break;
 				}
 

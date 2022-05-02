@@ -117,7 +117,7 @@ namespace Appalachia.Modules
 			public override string Usage => "[dice_notation]";
 
 			[Command]
-			public async Task DiceRoll([Remainder] string diceArgument)
+			public async Task DiceRoll(string diceArgument = "d100")
 			{
 				await Program.LogAsync($"Attempting to parse dice from: \"{diceArgument}\"", Source, LogSeverity.Debug);
 
@@ -194,7 +194,7 @@ namespace Appalachia.Modules
 				return Colors.MaxRoll;
 			else
 			{
-				Program.LogAsync("You should not see this. If you see this, RngModule.RollModule.GetRollColor() is broken. Go fix that.", Source);
+				Program.LogAsync("You should not see this. If you see this, RngModule.RollModule.GetRollColor() is broken. Go fix that.", Source, LogSeverity.Error);
 				return Colors.Default;
 			}
 		}
@@ -205,7 +205,7 @@ namespace Appalachia.Modules
 				rolls[i] = Util.Rand.Next(min, max + 1);
 			int total = rolls.Sum();
 
-			Program.LogAsync($"Roll: {calls}x[{min}, {max}] Result: {{{string.Join(", ", rolls)}}}={total}", Source);
+			Program.LogAsync($"Roll: {calls}x[{min}, {max}] Result: {{{string.Join(", ", rolls)}}}={total}", Source, LogSeverity.Verbose);
 			return (rolls, total);
 		}
 	}

@@ -123,7 +123,7 @@ namespace Appalachia.Modules
 		}
 		private async Task<EmbedBuilder> GetNotSpecifiedEmbed()
 		{
-			await Program.LogAsync($"No quote channel in server [{Context.Guild?.GetNameWithId() ?? Context.User.GetFullUsername()}]", Source);
+			await Program.LogAsync($"No quote channel in server [{Context.Guild?.GetNameWithId() ?? Context.User.GetFullUsername()}]", Source, LogSeverity.Verbose);
 			return EmbedHelper.GenerateErrorEmbed("This server has no defined quotes channel!");
 		}
 	}
