@@ -1,4 +1,5 @@
 ﻿using Appalachia.Data;
+using Appalachia.Modules;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -108,6 +109,18 @@ namespace Appalachia.Utility.Extensions
 		public static async Task<IMessage> ReplyEmbedAsync(this IUserMessage message, EmbedBuilder embedBuilder, bool mention = false)
 		{
 			return await ReplyEmbedAsync(message, embedBuilder.Build(), mention);
+		}
+		public static async Task<IMessage> SendErrorMessageAsync(this IMessageChannel channel, string errorMessage)
+		{
+			EmbedBuilder embed = new EmbedBuilder().WithTitle("Oops!")
+												   .WithDescription($"*{errorMessage}*")
+												   .WithColor(Colors.Error)
+												   .WithFooter("Need to report a bug? Contact my creator at Jolkert#2991");
+			return await SendEmbedAsync(channel, embed, new ButtonBuilder[]
+			{
+				new ButtonBuilder("Get more help", null, ButtonStyle.Link, HelpModule.WikiUrl, new Emoji("❓")),
+				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, "https://github.com/Jolkert/Appalachia/issues/new", new Emoji("🐜"))
+			});
 		}
 
 		public static string ToColorString(this Color color, bool withRgb = true)

@@ -1,7 +1,10 @@
-﻿using Appalachia.Utility;
+﻿using Appalachia.Services;
+using Appalachia.Utility;
 using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Appalachia.Modules
@@ -16,7 +19,25 @@ namespace Appalachia.Modules
 		[Command("help"), Alias("?"), Priority(int.MaxValue)] // does this do anything? i doubt it; update: apparently it does! -jolk 2022-04-28
 		public async Task HelpCommand()
 		{
-			(string mainAlias, EmbedBuilder embed) = EmbedHelper.GenerateHelpEmbed(this);
+			ModuleInfo foundModule = CommandHandler.Commands.Modules.Where(mod => mod.Name == ModuleName).FirstOrDefault();
+			string mainAlias = foundModule?.Aliases[0];
+			IEnumerable<string> aliases = foundModule?.Aliases.Select(cmdStr => cmdStr.Split(' ').Last()).Distinct();
+
+			List<EmbedFieldBuilder> fields = new List<EmbedFieldBuilder>();
+			fields.Add(new EmbedFieldBuilder().WithName("Usage").WithValue($"`{Program.Config.Settings.CommandPrefix}{mainAlias} {Usage}`").WithIsInline(false));
+
+			if (aliases != null && aliases.Count() > 1)
+				fields.Add(new EmbedFieldBuilder().WithName("Aliases").WithValue(string.Join(", ", aliases.Where(str => str != mainAlias).Select(str => $"`{str}`"))).WithIsInline(false));
+
+			EmbedBuilder embed = new EmbedBuilder().WithTitle($"{ModuleName} Help")
+												   .WithDescription(Description)
+												   .WithFields(fields)
+												   .WithColor(Colors.Default)
+												   .WithFooter(new EmbedFooterBuilder().WithText($"Need more help? Run {Program.Config.Settings.CommandPrefix}help")
+																					   .WithIconUrl(Program.Client.CurrentUser.GetAvatarUrl()));
+			// before you try to codeblock part of the footer again, markup doesnt work in footers -jolk 2022-01-11
+
+
 			string wikiLink = $"{HelpModule.WikiUrl}#{mainAlias.Split(' ')[^1]}".Replace(' ', '-');
 			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder("Need more help? Check the wiki page!", null, ButtonStyle.Link, wikiLink, new Emoji("❓")));
 		}

@@ -18,7 +18,7 @@ namespace Appalachia
 		private const string Source = "Main";
 
 		public static DiscordSocketClient Client;
-		public static readonly string Version = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
+		public static readonly string Version = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
 		private static readonly Logger Logger = new Logger();
 		private static readonly DailyTrigger MidnightTrigger = new DailyTrigger();
@@ -133,9 +133,9 @@ namespace Appalachia
 					break;
 
 				default:
-					embed = EmbedHelper.GenerateErrorEmbed("This isn\'t supposed to happen.\nIf you see this something has gone terribly wrong.");
+					await rawChannel.SendErrorMessageAsync("This isn\'t supposed to happen.\nIf you see this something has gone terribly wrong.");
 					await LogAsync("If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation", Source, LogSeverity.Error);
-					break;
+					return;
 			}
 
 			await rawChannel.SendEmbedAsync(embed);

@@ -110,7 +110,7 @@ namespace Appalachia.Modules
 
 				if (!match.Success)
 				{
-					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Unable convert `{input}` to a color!"));
+					await Context.Channel.SendErrorMessageAsync($"Unable convert `{input}` to a color!");
 					await Program.LogAsync($"No color regex match found for \"{input}\"", Source);
 				}
 				else
@@ -148,7 +148,7 @@ namespace Appalachia.Modules
 						}
 						catch (OverflowException)
 						{
-							await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("All RGB values must be between 0 and 255"));
+							await Context.Channel.SendErrorMessageAsync("All RGB values must be between 0 and 255");
 							return;
 						}
 					}
@@ -166,7 +166,7 @@ namespace Appalachia.Modules
 
 						if (overflow || value > 0xffffff)
 						{
-							await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Raw decimal color value must be between 0 and {0xffffff:#,###}"));
+							await Context.Channel.SendErrorMessageAsync($"Raw decimal color value must be between 0 and {0xffffff:#,###}");
 							return;
 						}
 
@@ -199,12 +199,12 @@ namespace Appalachia.Modules
 						break;
 
 					default:
-						embed = EmbedHelper.GenerateErrorEmbed("Could not change color!\n" +
+						await Context.Channel.SendErrorMessageAsync("Could not change color!\n" +
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
 						await Program.LogAsync("This message should never appear. If you see this something\'s up with the announcement channel modify command.", Source, LogSeverity.Error);
-						break;
+						return;
 				}
 
 				await Context.Channel.SendEmbedAsync(embed);
@@ -215,7 +215,7 @@ namespace Appalachia.Modules
 			{
 				if (channel == null)
 				{
-					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("No channel was specified!"));
+					await Context.Channel.SendErrorMessageAsync("No channel was specified!");
 					await Program.LogAsync("Announcement channel unchanged. No channel was specified.", Source, LogSeverity.Verbose);
 					return;
 				}
@@ -242,12 +242,12 @@ namespace Appalachia.Modules
 						break;
 
 					default:
-						embed = EmbedHelper.GenerateErrorEmbed("Could not change announcement channel!\n" +
+						await Context.Channel.SendErrorMessageAsync("Could not change announcement channel!\n" +
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
 						await Program.LogAsync("This message should never appear. If you see this something\'s up with the announcement channel modify command.", Source, LogSeverity.Error);
-						break;
+						return;
 				}
 
 				await Context.Channel.SendEmbedAsync(embed);
@@ -258,7 +258,7 @@ namespace Appalachia.Modules
 			{
 				if (channel == null)
 				{
-					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("No channel was specified!"));
+					await Context.Channel.SendErrorMessageAsync("No channel was specified!");
 					await Program.LogAsync("Quote channel unchanged. No channel was specified.", Source, LogSeverity.Verbose);
 					return;
 				}
@@ -284,12 +284,12 @@ namespace Appalachia.Modules
 						break;
 
 					default:
-						embed = EmbedHelper.GenerateErrorEmbed("Could not change quote channel!\n" +
+						await Context.Channel.SendErrorMessageAsync("Could not change quote channel!\n" +
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
 						await Program.LogAsync("This message should never appear. If you see this something\'s up with the quote channel modify command.", Source, LogSeverity.Error);
-						break;
+						return;
 				}
 
 				await Context.Channel.SendEmbedAsync(embed);
@@ -311,18 +311,24 @@ namespace Appalachia.Modules
 			{
 				ServerData.ModificationResult result = Context.Guild.AddFilteredWords(words);
 
-				// this is annoying to read i think -jolk 2022-02-15
-				EmbedBuilder embed = (result switch
+				EmbedBuilder embed;
+				switch (result)
 				{
-					ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
-																			   .WithDescription("All words have been addeded to the server\'s filters:\n" +
-																							   string.Join('\n', words.Select(str => $"{str.ToUpper()[0]}||{str[1..]}||")))
-																			   .WithColor(Context.Guild.GetColor()),
-					ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
-																				 .WithDescription("All provided words are already filtered in this server!")
-																				 .WithColor(Context.Guild.GetColor()),
-					_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
-				}).WithImageUrl(Context.Guild.IconUrl);
+					case ServerData.ModificationResult.Success:
+						embed = new EmbedBuilder().WithTitle("Wordlist updated!")
+												  .WithDescription("All words have been addeded to the server\'s filters:\n" + string.Join('\n', words.Select(str => $"{str.ToUpper()[0]}||{str[1..]}||")))
+												  .WithColor(Context.Guild.GetColor());
+						break;
+					case ServerData.ModificationResult.Unchanged:
+						embed = new EmbedBuilder().WithTitle("Nothing was changed!")
+												  .WithDescription("All provided words are already filtered in this server!")
+												  .WithColor(Context.Guild.GetColor());
+						break;
+					default:
+						await Context.Channel.SendErrorMessageAsync("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen");
+						return;
+				}
+				embed.WithImageUrl(Context.Guild.IconUrl);
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
@@ -336,17 +342,24 @@ namespace Appalachia.Modules
 					return;
 				}
 
-				// this is annoying to read i think -jolk 2022-02-15
-				EmbedBuilder embed = (result switch
+				EmbedBuilder embed;
+				switch (result)
 				{
-					ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
-																			   .WithDescription($"All words have been removed from the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
-																			   .WithColor(Context.Guild.GetColor()),
-					ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
-																				 .WithDescription("All provided words are already allowed in this server!")
-																				 .WithColor(Context.Guild.GetColor()),
-					_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
-				}).WithImageUrl(Context.Guild.IconUrl);
+					case ServerData.ModificationResult.Success:
+						embed = new EmbedBuilder().WithTitle("Wordlist updated!")
+													.WithDescription($"All words have been removed from the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
+												  .WithColor(Context.Guild.GetColor());
+						break;
+					case ServerData.ModificationResult.Unchanged:
+						embed = new EmbedBuilder().WithTitle("Nothing was changed!")
+												  .WithDescription("All provided words are already allowed in this server!")
+												  .WithColor(Context.Guild.GetColor());
+						break;
+					default:
+						await Context.Channel.SendErrorMessageAsync("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen");
+						return;
+				}
+				embed.WithImageUrl(Context.Guild.IconUrl);
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
@@ -354,17 +367,24 @@ namespace Appalachia.Modules
 			{
 				ServerData.ModificationResult result = Context.Guild.ClearFilteredWords();
 
-				// this is annoying to read i think -jolk 2022-02-15
-				EmbedBuilder embed = (result switch
+				EmbedBuilder embed;
+				switch (result)
 				{
-					ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
-																			   .WithDescription("Server word filter has been cleared!")
-																			   .WithColor(Context.Guild.GetColor()),
-					ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
-																				 .WithDescription("The server word filter was already empty!")
-																				 .WithColor(Context.Guild.GetColor()),
-					_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
-				}).WithThumbnailUrl(Context.Guild.IconUrl);
+					case ServerData.ModificationResult.Success:
+						embed = new EmbedBuilder().WithTitle("Wordlist updated!")
+										  .WithDescription("Server word filter has been cleared!")
+										  .WithColor(Context.Guild.GetColor());
+						break;
+					case ServerData.ModificationResult.Unchanged:
+						embed = new EmbedBuilder().WithTitle("Nothing was changed!")
+												  .WithDescription("The server word filter was already empty!")
+												  .WithColor(Context.Guild.GetColor());
+						break;
+					default:
+						await Context.Channel.SendErrorMessageAsync("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen");
+						return;
+				}
+				embed.WithThumbnailUrl(Context.Guild.IconUrl);
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}

@@ -54,10 +54,10 @@ namespace Appalachia.Modules
 					await message.AddRpsReactionsAsync();
 				}
 				else
-					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("I am the only bot smart enough to play this game.\nsorry"));
+					await Context.Channel.SendErrorMessageAsync("I am the only bot smart enough to play this game.\nsorry");
 			}
 			else if (Context.User.Id == opponent.Id)
-				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("You cannot challenge yourself!"));
+				await Context.Channel.SendErrorMessageAsync("You cannot challenge yourself!");
 			else
 			{
 				EmbedBuilder embed = new EmbedBuilder().WithTitle($"{opponent.Nickname ?? opponent.Username}, do you accept the challenge?")
@@ -161,7 +161,7 @@ namespace Appalachia.Modules
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
 				await RockPaperScissorsLeaderboard(user); // whats the worst that can happen?? -jolk 2022-03-22
 			else
-				await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed($"Could not find user \"{userArg}\""));
+				await Context.Channel.SendErrorMessageAsync($"Could not find user \"{userArg}\"");
 		}
 	}
 }

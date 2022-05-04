@@ -93,7 +93,7 @@ namespace Appalachia.Modules
 			[Command]
 			public async Task BasicRng(int min, int max, int calls = 1)
 			{
-				await Context.Message.ReplyEmbedAsync(GenerateRolls(Context, min, max, calls));
+				await GenerateRollsAsync(Context, min, max, calls);
 			}
 			[Command]
 			public async Task BasicRng(int max)
@@ -126,37 +126,36 @@ namespace Appalachia.Modules
 				Match match = Regex.Match(diceArgument, @"(?<count>\d*)d(?<max>\d+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 				if (!match.Success)
 				{
-					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("Could not parse dice format!"));
+					await Context.Channel.SendErrorMessageAsync("Could not parse dice format!");
 					return;
 				}
 
 				int max = int.Parse(match.Groups.GetValueOrDefault("max").Value);
+
 				if (int.TryParse(match.Groups.GetValueOrDefault("count").Value, out int count))
-					await Context.Message.ReplyEmbedAsync(GenerateRolls(Context, 1, max, count));
+					await GenerateRollsAsync(Context, 1, max, count);
 				else
-					await Context.Message.ReplyEmbedAsync(GenerateRolls(Context, 1, max));
+					await GenerateRollsAsync(Context, 1, max);
 			}
 		}
 
 
-		private static EmbedBuilder GenerateRolls(SocketCommandContext context, int min, int max, int calls = 1)
+		private static async Task GenerateRollsAsync(SocketCommandContext context, int min, int max, int calls = 1)
 		{
-			EmbedBuilder embed = new EmbedBuilder();
-
 			if (max <= min)
-				embed = EmbedHelper.GenerateErrorEmbed("Max value must be greater than min value!");
+				await context.Channel.SendErrorMessageAsync("Max value must be greater than min value!");
 			else if (calls < 1)
-				embed = EmbedHelper.GenerateErrorEmbed("Why would you even try that?");
+				await context.Channel.SendErrorMessageAsync("Why would you even try that?");
 			else
-			{
+			{	
 				(int[] rolls, int total) = Rng(min, max, calls);
-
-				embed.WithTitle("RNGesus says:");
-				embed.WithDescription($"{context.User.Mention} rolled\n{GenerateRollString(rolls, total, min, max)}");
-				embed.WithColor(GetRollColor(total, min, max, calls));
+				await context.Message.ReplyEmbedAsync(new EmbedBuilder().WithTitle("RNGesus says:")
+													   .WithDescription($"{context.User.Mention} rolled\n{GenerateRollString(rolls, total, min, max)}")
+													   .WithColor(GetRollColor(total, min, max, calls)));
+				
 			}
 
-			return embed;
+			
 		}
 		private static string GenerateRollString(int[] rolls, int total, int min, int max)
 		{
