@@ -26,7 +26,7 @@ namespace Appalachia.Data
 				WriteJson();
 			}
 		}
-		public void AddServer(ulong guildId, ulong quoteChannelId = 0, ulong announcementChannelId = 0, uint color = Colors.Default)
+		public void AddServer(ulong guildId, ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
 		{
 			AddServer(guildId, new Server(quoteChannelId, announcementChannelId, color));
 		}

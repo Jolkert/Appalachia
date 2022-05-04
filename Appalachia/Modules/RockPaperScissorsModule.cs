@@ -53,7 +53,7 @@ namespace Appalachia.Modules
 
 					await message.AddRpsReactionsAsync();
 				}
-				else //TODO: get a better error message maybe? -jolk 2022-01-07
+				else
 					await Context.Channel.SendEmbedAsync(EmbedHelper.GenerateErrorEmbed("I am the only bot smart enough to play this game.\nsorry"));
 			}
 			else if (Context.User.Id == opponent.Id)

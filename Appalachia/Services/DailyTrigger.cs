@@ -20,11 +20,11 @@ namespace Appalachia.Services
 						triggerTime += new TimeSpan(24, 0, 0);
 
 					await Task.Delay((int)(triggerTime - DateTime.Now).TotalMilliseconds);
-					TimeTriggered?.Invoke();
+					Trigger?.Invoke();
 				}
 			});
 		}
 
-		public event Action TimeTriggered;
+		public event Action Trigger;
 	}
 }

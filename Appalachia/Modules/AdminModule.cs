@@ -11,25 +11,95 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group("admin"), Name(Source), RequireContext(ContextType.Guild), RequireUserPermission(ChannelPermission.ManageChannels)]
+	[Group("admin"), Alias("adm", "ad"), Name(Source), RequireContext(ContextType.Guild), RequireUserPermission(ChannelPermission.ManageChannels)]
 	public class AdminModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
-		// TODO: probably rework most of this now that I know how the help command is gonna work. its gonna be a pain and im currently several thousand feet in the air. i'll come back to it -jolk 2022-05-02
-		private const string Source = "Admin";
+		private const string Source = "Admin"; // we probably dont need this for anything tbh? -jolk 2022-05-03
 
-		[Command("announce"), Alias("ann"), Name(Source + "/Announce")]
-		public async Task Announce([Remainder] string message)
+		[Group("announce"), Alias("ann"), Name(Source)]
+		public class AnnounceModule : ModuleWithHelp
 		{
-			await Context.Guild.GetAnnouncementChannel().SendMessageAsync(message);
+			private const string Source = "Announce";
+
+			public override string ModuleName => Source;
+			public override string Description => "Sends the message argument into the announcements channel if one is specified";
+			public override string Usage => "<message>";
+
+			[Command, Name(Source)]
+			public async Task Announce([Remainder] string message)
+			{
+				await Context.Guild.GetAnnouncementChannel().SendMessageAsync(message);
+			}
 		}
 
-		[Group("modify"), Alias("mod", "set", "edit", "change"), Name(AdminModule.Source + "/" + Source)]
-		public class ModifyModule : AdminModule
+		[Group("get"), Alias("access", "retrieve", "check"), Name(Source)]
+		public class AccessModule : ModuleWithHelp
 		{
-			private new const string Source = "Modify";
+			private const string Source = "Get";
 
-			[Command("color"), Alias("colour", "col"), Name(AdminModule.Source + "/" + Source + "/Color")]
-			public async Task ModifyColorCommand([Remainder] string input)
+			public override string ModuleName => Source;
+			public override string Description => "Retrieves bot-related server properties (announcement/quotes channel and server color)\n*See wiki page for details*";
+			public override string Usage => "<property>";
+
+			[Command("color"), Alias("colour", "col"), Name(Source)]
+			public async Task AccessColorCommand()
+			{
+				string color = new Color(Context.Guild.GetColor()).ToColorString();
+				EmbedBuilder embed = new EmbedBuilder().WithTitle($"{Context.Guild.Name} Information")
+													   .WithDescription($"Color for {Context.Guild.Name} is\n**{color}**")
+													   .WithColor(Context.Guild.GetColor())
+													   .WithThumbnailUrl(Context.Guild.IconUrl)
+													   .WithFooter($"To change the color, run {Program.Config.Settings.CommandPrefix}admin set color <new_color>");
+
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+
+			[Command("announcements"), Alias("announce", "ann"), Name(Source)]
+			public async Task AccessAnnouncementChannel()
+			{
+				SocketTextChannel channel = Context.Guild.GetAnnouncementChannel();
+				EmbedBuilder embed = new EmbedBuilder().WithTitle($"{Context.Guild.Name} Information")
+													   .WithColor(Context.Guild.GetColor())
+													   .WithThumbnailUrl(Context.Guild.IconUrl)
+													   .WithFooter($"To change the announcement channel, run {Program.Config.Settings.CommandPrefix}admin set announcements <#new_channel>");
+
+				if (channel == null)
+					embed.WithDescription($"No announcement channel is set for {Context.Guild.Name}");
+				else
+					embed.WithDescription($"{channel.Mention} is the annoucements channel in {Context.Guild.Name}");
+
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+
+			[Command("quotes"), Alias("quote", "qt"), Name(Source)]
+			public async Task AccessQuoteChannel()
+			{
+				SocketTextChannel channel = Context.Guild.GetQuoteChannel();
+				EmbedBuilder embed = new EmbedBuilder().WithTitle($"{Context.Guild.Name} Information")
+													   .WithColor(Context.Guild.GetColor())
+													   .WithThumbnailUrl(Context.Guild.IconUrl)
+													   .WithFooter($"To change the quotes channel, run {Program.Config.Settings.CommandPrefix}admin set quotes <#new_channel>");
+
+				if (channel == null)
+					embed.WithDescription($"No quotes channel is set for {Context.Guild.Name}");
+				else
+					embed.WithDescription($"{channel.Mention} is the quotes channel in {Context.Guild.Name}");
+
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+		}
+
+		[Group("set"), Alias("modify", "mod", "edit", "change"), Name(Source)]
+		public class ModifyModule : ModuleWithHelp
+		{
+			private const string Source = "Set";
+
+			public override string ModuleName => Source;
+			public override string Description => "Makes changes to bot-related server properties (announcement/quotes channel and server color)\n*See wiki page for details*";
+			public override string Usage => "<property> <new_value>";
+
+			[Command("color"), Alias("colour", "col"), Name(Source)]
+			public async Task ModifyColorCommand(string input)
 			{
 				// this is a mess. i wanna clean this up, but i have zero motivation and im tired and its almost 3am -jolk 2022-01-06
 				// still a disaster, but much better than before. i really hate this method, but it works so who cares? -jolk 2022-01-06
@@ -140,8 +210,8 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("announcements"), Alias("announce", "ann"), Name(AdminModule.Source + "/" + Source + "/Announcements")]
-			public async Task ModifyAnnouncementChannel(SocketTextChannel channel = null)
+			[Command("announcements"), Alias("announce", "ann"), Name(Source)]
+			public async Task ModifyAnnouncementChannel(SocketTextChannel channel)
 			{
 				if (channel == null)
 				{
@@ -183,8 +253,8 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("quotes"), Alias("quote", "qt"), Name(AdminModule.Source + "/" + Source + "/Quotes")]
-			public async Task ModifyQuoteChannel(SocketTextChannel channel = null)
+			[Command("quotes"), Alias("quote", "qt"), Name(Source)]
+			public async Task ModifyQuoteChannel(SocketTextChannel channel)
 			{
 				if (channel == null)
 				{
@@ -224,77 +294,91 @@ namespace Appalachia.Modules
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
+		}
 
-			// TODO: add a modifier for ShouldMatchSubstitutions -jolk 2022-05-02
-			[Group("filter"), Alias("bannedwords", "blacklist"), Name(AdminModule.Source + "/" + ModifyModule.Source + "/" + Source)]
-			public class WordFilterModule : AdminModule
+		// TODO: add a modifier for ShouldMatchSubstitutions -jolk 2022-05-02
+		[Group("filter"), Alias("wordfilter", "bannedwords"), Name(Source)]
+		public class WordFilterModule : ModuleWithHelp
+		{
+			private const string Source = "Filter";
+
+			public override string ModuleName => Source;
+			public override string Description => "Adds or removes words from the server's word filter\n*Enter `-A` (case-sensitive) as the first argument of the `remove` command to clear filter*";
+			public override string Usage => "<add|remove|list> <word_1> [word_2 ...]";
+
+			[Command("add"), Name(Source)]
+			public async Task AddWords(params string[] words)
 			{
-				private new const string Source = "Word Filter";
-				private readonly Regex WordRegex = new Regex(@"(?<=\b)([a-z0-9]*)(?=\b)", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture);
+				ServerData.ModificationResult result = Context.Guild.AddFilteredWords(words);
 
-				[Command("add")]
-				public async Task AddWords([Remainder] string input)
+				// this is annoying to read i think -jolk 2022-02-15
+				EmbedBuilder embed = (result switch
 				{
-					MatchCollection matches = WordRegex.Matches(input);
-					string[] words = WordRegex.Matches(input).Select(match => match.Value).Where(str => str != "").Distinct().ToArray();
+					ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
+																			   .WithDescription("All words have been addeded to the server\'s filters:\n" +
+																							   string.Join('\n', words.Select(str => $"{str.ToUpper()[0]}||{str[1..]}||")))
+																			   .WithColor(Context.Guild.GetColor()),
+					ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
+																				 .WithDescription("All provided words are already filtered in this server!")
+																				 .WithColor(Context.Guild.GetColor()),
+					_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
+				}).WithImageUrl(Context.Guild.IconUrl);
 
-					ServerData.ModificationResult result = Context.Guild.AddFilteredWords(words);
-
-					// this is annoying to read i think -jolk 2022-02-15
-					EmbedBuilder embed = (result switch
-					{
-						ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
-																				   .WithDescription($"All words have been addeded to the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
-																				   .WithColor(Context.Guild.GetColor()),
-						ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
-																					 .WithDescription("All provided words are already filtered in this server!")
-																					 .WithColor(Context.Guild.GetColor()),
-						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
-					}).WithImageUrl(Context.Guild.IconUrl);
-
-					await Context.Channel.SendEmbedAsync(embed);
-				}
-				[Command("remove"), Alias("delete", "del")]
-				public async Task RemoveWords([Remainder] string input)
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+			[Command("remove"), Alias("delete", "del"), Name(Source)]
+			public async Task RemoveWords(params string[] words)
+			{
+				ServerData.ModificationResult result = Context.Guild.RemoveFilteredWords(words);
+				if (words[0] == "-A")
 				{
-					MatchCollection matches = WordRegex.Matches(input);
-					string[] words = WordRegex.Matches(input).Select(match => match.Value).Where(str => str != "").Distinct().ToArray();
-
-					ServerData.ModificationResult result = Context.Guild.RemoveFilteredWords(words);
-
-					// this is annoying to read i think -jolk 2022-02-15
-					EmbedBuilder embed = (result switch
-					{
-						ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
-																				   .WithDescription($"All words have been removed from the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
-																				   .WithColor(Context.Guild.GetColor()),
-						ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
-																					 .WithDescription("All provided words are already allowed in this server!")
-																					 .WithColor(Context.Guild.GetColor()),
-						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
-					}).WithImageUrl(Context.Guild.IconUrl);
-
-					await Context.Channel.SendEmbedAsync(embed);
+					await ClearWords();
+					return;
 				}
-				[Command("clear")]
-				public async Task ClearWords()
+
+				// this is annoying to read i think -jolk 2022-02-15
+				EmbedBuilder embed = (result switch
 				{
-					ServerData.ModificationResult result = Context.Guild.ClearFilteredWords();
+					ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
+																			   .WithDescription($"All words have been removed from the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
+																			   .WithColor(Context.Guild.GetColor()),
+					ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
+																				 .WithDescription("All provided words are already allowed in this server!")
+																				 .WithColor(Context.Guild.GetColor()),
+					_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
+				}).WithImageUrl(Context.Guild.IconUrl);
 
-					// this is annoying to read i think -jolk 2022-02-15
-					EmbedBuilder embed = (result switch
-					{
-						ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
-																				   .WithDescription("Server word filter has been cleared!")
-																				   .WithColor(Context.Guild.GetColor()),
-						ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
-																					 .WithDescription("The server word filter was already empty!")
-																					 .WithColor(Context.Guild.GetColor()),
-						_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
-					}).WithImageUrl(Context.Guild.IconUrl);
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+			private async Task ClearWords()
+			{
+				ServerData.ModificationResult result = Context.Guild.ClearFilteredWords();
 
-					await Context.Channel.SendEmbedAsync(embed);
-				}
+				// this is annoying to read i think -jolk 2022-02-15
+				EmbedBuilder embed = (result switch
+				{
+					ServerData.ModificationResult.Success => new EmbedBuilder().WithTitle("Wordlist updated!")
+																			   .WithDescription("Server word filter has been cleared!")
+																			   .WithColor(Context.Guild.GetColor()),
+					ServerData.ModificationResult.Unchanged => new EmbedBuilder().WithTitle("Nothing was changed!")
+																				 .WithDescription("The server word filter was already empty!")
+																				 .WithColor(Context.Guild.GetColor()),
+					_ => EmbedHelper.GenerateErrorEmbed("For some reason this server can\'t be found in my database.\nThis is a bug. It should not happen")
+				}).WithThumbnailUrl(Context.Guild.IconUrl);
+
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+
+			[Command("list"), Alias("ls"), Name(Source)]
+			public async Task ListWords([Remainder] string _ = "")
+			{
+				EmbedBuilder embed = new EmbedBuilder().WithTitle($"List of filtered words in {Context.Guild.Name}")
+													   .WithDescription("List spoiler tagged as filters are likely to contain offensive terms\nItems are individually hidden. First letter is shown\n" +
+																	   $"{string.Join('\n', Context.Guild.GetFilteredWords().Select(str => $"{str.ToUpper()[0]}||{str[1..]}||"))}")
+													   .WithColor(Context.Guild.GetColor())
+													   .WithThumbnailUrl(Context.Guild.IconUrl);
+
+				await Context.Channel.SendEmbedAsync(embed);
 			}
 		}
 	}

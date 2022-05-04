@@ -75,7 +75,7 @@ namespace Appalachia
 			await Client.StartAsync();
 			await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-			MidnightTrigger.TimeTriggered += Logger.Restart;
+			MidnightTrigger.Trigger += Logger.Restart;
 			await Task.Delay(-1);
 		}
 
@@ -207,7 +207,6 @@ namespace Appalachia
 				await channel.SendEmbedAsync(GenerateRoundResultEmbed(gameData, challenger, opponent, roundWinner));
 
 				// send match winner if determined
-				// TODO: update leaderboards once they're working -jolk 2022-01-10
 				gameData.IncrementRound();
 				(int winner, int loser) previousElos = (-1, -1);
 				switch (matchWinner)
@@ -374,19 +373,42 @@ namespace Appalachia
 			foreach (SocketGuild guild in Client.Guilds)
 			{
 				await LogAsync($"Connected to {guild.Name} ({guild.Id})", "Startup");
-				Util.Servers.AddServer(guild.Id);
-				await guild.DownloadUsersAsync();
+				Task _ = guild.DownloadUsersAsync();
+				if (!Util.Servers.Exists(guild.Id))
+				{
+					(ulong announcementChannelId, ulong quoteChannelId) = GetImportantChannelIds(guild);
+					Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
+				}
+				
 			}
-
 			await LogAsync($"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!", "Startup");
 		}
 		private async Task OnServerJoinAsync(SocketGuild guild)
 		{
 			await LogAsync($"Joined {guild.Name} ({guild.Id})", "ServerJoin");
-			Util.Servers.AddServer(guild.Id);
-			await guild.DownloadUsersAsync();
+			Task _ = guild.DownloadUsersAsync();
+			(ulong announcementChannelId, ulong quoteChannelId) = GetImportantChannelIds(guild);
+			Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
+		}
+		private (ulong announcements, ulong quotes) GetImportantChannelIds(SocketGuild guild)
+		{
+			SocketTextChannel announcementChannel = null, quoteChannel = null;
+			foreach (SocketTextChannel textChannel in guild.TextChannels)
+			{
+				if (announcementChannel == null && (textChannel.GetChannelType() == ChannelType.News || textChannel.Name.Contains("announcements")))
+					announcementChannel = textChannel;
+
+				if (quoteChannel == null && textChannel.Name.Contains("quote"))
+					quoteChannel = textChannel;
+			}
+
+			return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
 		}
 
+		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
+		{
+			return LogAsync(new LogMessage(severity, source, message.Replace("\n", "\\n")));
+		}
 		private static Task LogAsync(LogMessage log)
 		{
 			Console.ForegroundColor = log.Severity switch
@@ -408,17 +430,13 @@ namespace Appalachia
 			Console.ResetColor();
 			return Task.CompletedTask;
 		}
-		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
-		{
-			return LogAsync(new LogMessage(severity, source, message.Replace("\n", "\\n")));
-		}
 
 		public static void Stop()
 		{
-			if (Config.Settings.OutputLogsToFile)
-				Logger.Close();
+			Logger.Close();
 			Environment.Exit(Environment.ExitCode);
 		}
+		
 
 
 		private static ServiceProvider ConfigureServices()
