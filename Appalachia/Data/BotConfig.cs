@@ -3,13 +3,19 @@
 	public class BotConfig : BaseJsonDataHolder<ConfigOptions>
 	{
 		private const string ConfigFile = "config.json";
-		public ConfigOptions Settings { get => _data; }
+		public ConfigOptions Settings { get => _data; private set => _data = value; }
 
 		public BotConfig() : base(ConfigFile, ConfigOptions.DefaultSettings) { }
 
 		public void SetToken(string token)
 		{
-			Settings.SetToken(token);
+			Settings = new ConfigOptions(token, Settings.CommandPrefix, Settings.OutputLogsToFile);
+			WriteJson();
+		}
+
+		public void SetPrefix(string prefix)
+		{
+			Settings = new ConfigOptions(Settings.Token, prefix, Settings.OutputLogsToFile);
 			WriteJson();
 		}
 	}
@@ -28,11 +34,6 @@
 			this.Token = token;
 			this.CommandPrefix = prefix;
 			this.OutputLogsToFile = outputLogsToFile;
-		}
-
-		public void SetToken(string token)
-		{
-			this.Token = token;
 		}
 	}
 }

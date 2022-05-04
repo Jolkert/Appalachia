@@ -8,6 +8,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Appalachia
@@ -17,7 +18,7 @@ namespace Appalachia
 		private const string Source = "Main";
 
 		public static DiscordSocketClient Client;
-		public const string Version = "2.0.0-dev"; // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
+		public static readonly string Version = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
 		private static readonly Logger Logger = new Logger();
 		private static readonly DailyTrigger MidnightTrigger = new DailyTrigger();
@@ -43,26 +44,24 @@ namespace Appalachia
 
 		public async Task StartAsync()
 		{
-			// should i prompt for this instead of just returning? eh. probably -jolk 2022-01-09
 			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
 			{
-				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json", "Startup", LogSeverity.Critical);
-				Stop();
+				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json or enter token now", "Startup", LogSeverity.Error);
+				Console.Write("Enter bot token: ");
+				Config.SetToken(Console.ReadLine());
 			}
 			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
 			{
-				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json", "Startup", LogSeverity.Critical);
-				Stop();
+				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json or enter prefix now", "Startup", LogSeverity.Error);
+				Console.Write("Enter bot prefix: ");
+				Config.SetPrefix(Console.ReadLine());
 			}
 			if (!Config.Settings.OutputLogsToFile)
 				await LogAsync("OutputLogsToFile false in config. Logs of bot activity will not be saved!", "Startup", LogSeverity.Info);
 
-
-			using ServiceProvider services = ConfigureServices();
-
 			await LogAsync($"Starting Appalachia v{Version}", "Startup");
-			if (Version.Contains("dev"))
-				await LogAsync("This is a development build, and will likely have bugs!", "Startup", LogSeverity.Debug);
+			
+			using ServiceProvider services = ConfigureServices();
 			Client = services.GetRequiredService<DiscordSocketClient>();
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
@@ -379,7 +378,7 @@ namespace Appalachia
 					(ulong announcementChannelId, ulong quoteChannelId) = GetImportantChannelIds(guild);
 					Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
 				}
-				
+
 			}
 			await LogAsync($"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!", "Startup");
 		}
@@ -436,7 +435,7 @@ namespace Appalachia
 			Logger.Close();
 			Environment.Exit(Environment.ExitCode);
 		}
-		
+
 
 
 		private static ServiceProvider ConfigureServices()
