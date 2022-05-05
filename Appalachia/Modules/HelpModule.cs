@@ -16,7 +16,7 @@ namespace Appalachia.Modules
 
 		public const string WikiUrl = "https://github.com/Jolkert/Appalachia/wiki";
 		public const string IssueReportUrl = "https://github.com/Jolkert/Appalachia/issues/new";
-		private const string OAuthUrl = "https://github.com/Jolkert/Appalachia/wiki"; // remember to add this before release -jolk 2022-01-09
+		private const string OAuthUrl = "https://discord.com/api/oauth2/authorize?client_id=519292417816395779&permissions=8&scope=bot%20applications.commands";
 		private const ulong CreatorId = 227916147540885505; // this is just so i can refer to myself lmao. maybe move this to Program tho? -jolk 2022-04-28
 
 		private static readonly EmbedBuilder embed = new EmbedBuilder().WithTitle("Appalachia Help")
