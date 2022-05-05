@@ -119,7 +119,7 @@ namespace Appalachia.Utility.Extensions
 			return await SendEmbedAsync(channel, embed, new ButtonBuilder[]
 			{
 				new ButtonBuilder("Get more help", null, ButtonStyle.Link, HelpModule.WikiUrl, new Emoji("❓")),
-				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, "https://github.com/Jolkert/Appalachia/issues/new", new Emoji("🐜"))
+				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, HelpModule.IssueReportUrl, new Emoji("🐜"))
 			});
 		}
 

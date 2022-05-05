@@ -14,7 +14,8 @@ namespace Appalachia.Modules
 	{
 		private const string Source = "Help";
 
-		public const string WikiUrl = "https://github.com/Jolkert/Appalachia/wiki/Commands";
+		public const string WikiUrl = "https://github.com/Jolkert/Appalachia/wiki";
+		public const string IssueReportUrl = "https://github.com/Jolkert/Appalachia/issues/new";
 		private const string OAuthUrl = "https://github.com/Jolkert/Appalachia/wiki"; // remember to add this before release -jolk 2022-01-09
 		private const ulong CreatorId = 227916147540885505; // this is just so i can refer to myself lmao. maybe move this to Program tho? -jolk 2022-04-28
 
@@ -22,22 +23,19 @@ namespace Appalachia.Modules
 												 .WithDescription($"Command prefix is `{Program.Config.Settings.CommandPrefix}`\n" +
 																  $"For more information about a specific command, run `{Program.Config.Settings.CommandPrefix}help <command>`\n" +
 																  $"For information about all Appalachia commands, see the wiki below")
-												/* .WithFields(new EmbedFieldBuilder[]
-												 {
-													new EmbedFieldBuilder().WithName("Helpful links").WithValue($"[Command Help]({WikiUrl})\n[Add to your own server!]({OAuthUrl})")
-												 })*/ // probaby remove this block at some point. i think the link buttons are quite a bit better -jolk 2022-04-28
+												 .WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl())
 												 .WithColor(Colors.Default)
-												 .WithFooter(new EmbedFooterBuilder()
-												 .WithIconUrl(Program.Client.GetUser(CreatorId).GetAvatarUrl())
-												 .WithText($"Bot author: Jolkert#2991 | v{Program.Version}"));
+												 .WithFooter(new EmbedFooterBuilder().WithText($"Bot author: Jolkert#2991 ・ v{Program.Version}")
+																					 .WithIconUrl(Program.Client.GetUser(CreatorId).GetAvatarUrl()));
 
 		[Command, Name(Source), Priority(1)]
 		public async Task HelpCommand()
 		{
 			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder[]
 			{
-				new ButtonBuilder("Command Help Wiki", null, ButtonStyle.Link, WikiUrl, new Emoji("❓")),
-				new ButtonBuilder("Add to Your Own Server!", null, ButtonStyle.Link, OAuthUrl, Emote.Parse("<:appalachia:969373293499007006>"))
+				new ButtonBuilder("Commands Wiki", null, ButtonStyle.Link, WikiUrl, new Emoji("❓")),
+				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, WikiUrl, new Emoji("🐜")),
+				new ButtonBuilder("Add to Your Server!", null, ButtonStyle.Link, OAuthUrl, Emote.Parse("<:appalachia:969373293499007006>"))
 			});
 		}
 

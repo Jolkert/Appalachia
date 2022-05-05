@@ -38,7 +38,7 @@ namespace Appalachia.Modules
 			// before you try to codeblock part of the footer again, markup doesnt work in footers -jolk 2022-01-11
 
 
-			string wikiLink = $"{HelpModule.WikiUrl}#{mainAlias.Split(' ')[^1]}".Replace(' ', '-');
+			string wikiLink = $"{HelpModule.WikiUrl}/Commands#{mainAlias.Split(' ')[^1]}";
 			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder("Need more help? Check the wiki page!", null, ButtonStyle.Link, wikiLink, new Emoji("❓")));
 		}
 	}
