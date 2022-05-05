@@ -5,11 +5,11 @@ namespace Appalachia.Utility
 	public static class Reactions
 	{
 		public static readonly IEmote
-			RpsAccept = new Emoji("✅"),
-			RpsDeny = new Emoji("❌"),
+			RpsAccept = new Emoji("\u2705"),
+			RpsDeny = new Emoji("\u274C"),
 
-			RpsRock = new Emoji("✊"),
-			RpsPaper = new Emoji("🖐"),
-			RpsScissors = new Emoji("✌️");
+			RpsRock = new Emoji("\u270A"),
+			RpsPaper = new Emoji("\uD83D\uDD90"),
+			RpsScissors = new Emoji("\u270C");
 	}
 }

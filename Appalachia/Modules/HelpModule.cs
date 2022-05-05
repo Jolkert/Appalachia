@@ -33,8 +33,8 @@ namespace Appalachia.Modules
 		{
 			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder[]
 			{
-				new ButtonBuilder("Commands Wiki", null, ButtonStyle.Link, WikiUrl, new Emoji("❓")),
-				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, WikiUrl, new Emoji("🐜")),
+				new ButtonBuilder("Commands Wiki", null, ButtonStyle.Link, WikiUrl, new Emoji("\u2753")),
+				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, WikiUrl, new Emoji("\uD83D\uDC1C")),
 				new ButtonBuilder("Add to Your Server!", null, ButtonStyle.Link, OAuthUrl, Emote.Parse("<:appalachia:969373293499007006>"))
 			});
 		}

@@ -118,8 +118,8 @@ namespace Appalachia.Utility.Extensions
 												   .WithFooter("Need to report a bug? Contact my creator at Jolkert#2991");
 			return await SendEmbedAsync(channel, embed, new ButtonBuilder[]
 			{
-				new ButtonBuilder("Get more help", null, ButtonStyle.Link, HelpModule.WikiUrl, new Emoji("❓")),
-				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, HelpModule.IssueReportUrl, new Emoji("🐜"))
+				new ButtonBuilder("Get more help", null, ButtonStyle.Link, HelpModule.WikiUrl, new Emoji("\u2753")),
+				new ButtonBuilder("Report a bug", null, ButtonStyle.Link, HelpModule.IssueReportUrl, new Emoji("\uD83D\uDC1C"))
 			});
 		}
 

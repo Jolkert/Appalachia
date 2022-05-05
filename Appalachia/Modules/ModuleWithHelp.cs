@@ -39,7 +39,7 @@ namespace Appalachia.Modules
 
 
 			string wikiLink = $"{HelpModule.WikiUrl}/Commands#{mainAlias.Split(' ')[^1]}";
-			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder("Need more help? Check the wiki page!", null, ButtonStyle.Link, wikiLink, new Emoji("❓")));
+			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder("Need more help? Check the wiki page!", null, ButtonStyle.Link, wikiLink, new Emoji("\u2753")));
 		}
 	}
 }
