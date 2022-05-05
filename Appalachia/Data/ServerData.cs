@@ -28,7 +28,29 @@ namespace Appalachia.Data
 		}
 		public void AddServer(ulong guildId, ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
 		{
-			AddServer(guildId, new Server(quoteChannelId, announcementChannelId, color));
+			AddServer(guildId, new Server(announcementChannelId, quoteChannelId, color));
+		}
+		public void RemoveServer(ulong guildId)
+		{
+			if (Exists(guildId))
+			{
+				_data.Remove(guildId);
+				WriteJson();
+			}
+		}
+		public int RemoveMissingIds(params ulong[] guildIds)
+		{
+			int guildsRemoved = 0;
+			foreach (KeyValuePair<ulong, Server> pair in _data)
+			{
+				if (!guildIds.Contains(pair.Key))
+				{
+					RemoveServer(pair.Key);
+					guildsRemoved++;
+				}
+			}
+
+			return guildsRemoved;
 		}
 		public bool Exists(ulong guildId)
 		{// Now that I added this to AddServer I dont think i need this but im gonna keep it anyways -jolk 2022-01-04
@@ -231,8 +253,8 @@ namespace Appalachia.Data
 
 	public class Server
 	{
-		public ulong QuoteChannelId { get; set; }
 		public ulong AnnouncementChannelId { get; set; }
+		public ulong QuoteChannelId { get; set; }
 		public uint Color { get; set; }
 		public List<string> FilteredWords { get; set; }
 
@@ -241,10 +263,10 @@ namespace Appalachia.Data
 		// TODO: that ^
 		public Dictionary<ulong, UserScore> RpsLeaderboard { get; set; } // not sure why that wasnt a property before. knew something looked off. oops -jolk 2022-02-15
 
-		public Server(ulong quoteChannelId = 0, ulong announcementChannelId = 0, uint color = Colors.Default)
+		public Server(ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
 		{
-			this.QuoteChannelId = quoteChannelId;
 			this.AnnouncementChannelId = announcementChannelId;
+			this.QuoteChannelId = quoteChannelId;
 			this.Color = color;
 			this.RpsLeaderboard = new Dictionary<ulong, UserScore>();
 			this.FilteredWords = new List<string>();

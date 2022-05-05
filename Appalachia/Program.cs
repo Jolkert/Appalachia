@@ -7,6 +7,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -66,6 +67,7 @@ namespace Appalachia
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
 			Client.JoinedGuild += OnServerJoinAsync;
+			Client.LeftGuild += OnGuildLeaveAsync;
 			Client.ReactionAdded += OnReactAsync;
 			Client.MessageReceived += FilterWordsAsync;
 
@@ -369,8 +371,11 @@ namespace Appalachia
 		private async Task OnReadyAsync()
 		{
 			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
+
+			List<ulong> activeServers = new List<ulong>();
 			foreach (SocketGuild guild in Client.Guilds)
 			{
+				activeServers.Add(guild.Id);
 				await LogAsync($"Connected to {guild.Name} ({guild.Id})", "Startup");
 				Task _ = guild.DownloadUsersAsync();
 				if (!Util.Servers.Exists(guild.Id))
@@ -380,6 +385,11 @@ namespace Appalachia
 				}
 
 			}
+
+			int serversRemoved = Util.Servers.RemoveMissingIds(activeServers.ToArray());
+			if (serversRemoved > 0)
+				await LogAsync($"Removed {serversRemoved} extraneous server{(serversRemoved != 1 ? "s" : "")} from database", "Startup");
+
 			await LogAsync($"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!", "Startup");
 		}
 		private async Task OnServerJoinAsync(SocketGuild guild)
@@ -402,6 +412,11 @@ namespace Appalachia
 			}
 
 			return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
+		}
+		private async Task OnGuildLeaveAsync(SocketGuild guild)
+		{
+			Util.Servers.RemoveServer(guild.Id);
+			await LogAsync($"Removed data for {guild.GetNameWithId()}", Source);
 		}
 
 		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
