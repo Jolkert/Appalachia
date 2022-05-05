@@ -1,4 +1,5 @@
 # Appalachia
+![Appalachia Icon](https://cdn.discordapp.com/avatars/519292417816395779/2d2fbe8c41669254d39fed0cefc08783.png)
 A C# Discord bot with various fun (and sometimes even useful!) commands.  
 This is a *very* amateur project, so don't expect too much from it, and expect several bugs and performance issues. Though I like to imagine I know what I'm doing, I really don't so a lot *will* go wrong.
 
