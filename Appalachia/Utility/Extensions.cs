@@ -186,16 +186,15 @@ namespace Appalachia.Utility.Extensions
 				return false;
 
 			// this might get a tad overzealous? idk i'll (hopefully) come back to it later or smth -jolk 2022-02-14
-			string regexString = string.Join('|', globalFilteredWords.Concat(serverFilteredWords)).ToLowerInvariant();
-			if (Util.FilteredWords.ShouldMatchSubstitutions)
-				regexString = regexString.Replace("i", "[i!1]")
-										 .Replace("e", "[e3]")
-										 .Replace("o", "[o0]")
-										 .Replace("a", "[a4@]")
-										 .Replace("l", "[l1]")
-										 .Replace("b", "[b8]")
-										 .Replace("s", "[s5]")
-										 .Replace("z", "[z2]");
+			string regexString = string.Join('|', globalFilteredWords.Concat(serverFilteredWords)).ToLowerInvariant()
+								.Replace("i", "[i!1]")
+								.Replace("e", "[e3]")
+								.Replace("o", "[o0]")
+								.Replace("a", "[a4@]")
+								.Replace("l", "[l1]")
+								.Replace("b", "[b8]")
+								.Replace("s", "[s5]")
+								.Replace("z", "[z2]");
 
 			return Regex.IsMatch(message.Content.ToLowerInvariant(), regexString);
 		}

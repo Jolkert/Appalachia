@@ -421,6 +421,8 @@ namespace Appalachia
 
 		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
 		{
+			if (Config == null)
+				return Task.CompletedTask;
 			return LogAsync(new LogMessage(severity, source, message.Replace("\n", "\\n")));
 		}
 		private static Task LogAsync(LogMessage log)

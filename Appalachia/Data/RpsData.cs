@@ -99,15 +99,8 @@ namespace Appalachia.Data
 			WriteJson();
 		}
 
-		public override void ReloadJson()
-		{
-			base.ReloadJson(true);
-			Program.LogAsync("Rps data reloaded!", GetType().Name);
-		}
-		public override void WriteJson()
-		{
-			base.WriteJson(true);
-		}
+		public override void ReloadJson() => base.ReloadJson(true);
+		public override void WriteJson() => base.WriteJson(true);
 
 		// TODO: get rid of this later. i just need it for testing -jolk 2022-01-09
 		public void ClearData()

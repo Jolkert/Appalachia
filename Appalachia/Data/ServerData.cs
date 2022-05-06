@@ -236,11 +236,6 @@ namespace Appalachia.Data
 		}
 
 		// holy fuck its like 5am. i am tired. i need to sleep -jolk 2022-01-03
-		public override void ReloadJson()
-		{
-			base.ReloadJson();
-			Program.LogAsync("Server data reloaded!", GetType().Name);
-		}
 
 		[Flags]
 		public enum ModificationResult
@@ -257,6 +252,8 @@ namespace Appalachia.Data
 		public ulong QuoteChannelId { get; set; }
 		public uint Color { get; set; }
 		public List<string> FilteredWords { get; set; }
+		public bool ShouldMatchSubstitutions { get; set; } // idk what else to call this. its whether or not to check for common fiter-avoidance characters -jolk 2022-05-02
+		// oops this should be in here lol -jolk 2022-05-05
 
 		// I really dont think this should be a dictionary. I kinda wanna make this like a normal list or smth that i sort on modification
 		// that would make a lot more sense but would be a bit of effort to go refactor everything. idk prob eventually -jolk 2022-02-14
