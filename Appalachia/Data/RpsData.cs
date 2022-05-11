@@ -101,17 +101,6 @@ namespace Appalachia.Data
 
 		public override void ReloadJson() => base.ReloadJson(true);
 		public override void WriteJson() => base.WriteJson(true);
-
-		// TODO: get rid of this later. i just need it for testing -jolk 2022-01-09
-		public void ClearData()
-		{
-			this._data = new Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>()
-			{
-				{ DataKey.Challenges, new Dictionary<ulong, RpsChallenge>() },
-				{ DataKey.ActiveGames, new Dictionary<ulong, RpsChallenge>() }
-			};
-			WriteJson();
-		}
 	}
 
 	public class RpsChallenge
@@ -185,6 +174,11 @@ namespace Appalachia.Data
 		// i tried to make this a struct. i really did. but im too small brain to make it work. this is the best i can give ya with my drained brainpower got. sorry.
 		// idk maybe we can fix it later? "nothing more permanent etc. etc." but i mean. its fine. this is fine.
 		// dont code on a broken brain kids -jolk 2022-01-09
+
+		// ok i fixed it. turns out when you read the documentation for the error youre getting, it makes it a lot easier to fix it -jolk 2022-05-10
+		// ok so i lied again. for some reason when you make this a struct, the bot refuses to send selection messages after a reload command??? -jolk 2022-05-10
+		// TODO: look into that. maybe make it work with a struct. maybe dont. im starting to think that making it a struct is far more effort than its truly worth -jolk 2022-05-10
+
 		public T Opponent { get; set; }
 		public T Challenger { get; set; }
 

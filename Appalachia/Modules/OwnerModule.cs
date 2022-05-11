@@ -35,19 +35,5 @@ namespace Appalachia.Modules
 			await Program.LogAsync("Shutting down bot...", Source);
 			Program.Stop();
 		}
-
-		// do i really need either of these commands? i doubt it -jolk 2022-02-15
-		[Command("rpsclear"), Name(Source + "/RpsClear")]
-		public async Task RpsClear()
-		{
-			await Task.Run(() => Util.Rps.ClearData());
-		}
-
-		[Command("quoteclear")]
-		public async Task QuoteClear()
-		{
-			Context.Guild.SetQuoteChannel(null);
-			await Context.Channel.SendMessageAsync("Quotes channel unset!");
-		}
 	}
 }
