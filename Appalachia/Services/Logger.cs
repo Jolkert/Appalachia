@@ -16,36 +16,33 @@ namespace Appalachia.Services
 		private readonly Queue<string> _writeQueue; // We use the queue to prevent collisions
 		private readonly ThreadStart _writeThreadStart;
 		private Thread _writeThread;
-		private bool _isOpen;
 
 		public Logger()
 		{
-			_isOpen = false;
+			_writeQueue = new Queue<string>();
+			StartStream();
 			_writeThreadStart = new ThreadStart(() =>
 			{
 				while (_writeQueue.Count > 0)
 					LogToFileFromQueue();
-			});
-			_writeQueue = new Queue<string>();
-			StartStream();
+				RestartStream();
+			});	
 		}
 
 		public void LogToFile(string log)
 		{
 			_writeQueue.Enqueue(log);
-			if (_isOpen && (_writeThread == null || _writeThread.ThreadState == ThreadState.Stopped))
+			if (_writeThread == null || _writeThread.ThreadState == ThreadState.Stopped)
 				StartWriteThread();
 		}
 		private void LogToFileFromQueue()
 		{
-			if (_isOpen)
-				_stream.Write(Encoding.UTF8.GetBytes($"{_writeQueue.Dequeue()}\n"));
-			RestartStream();
+			if (_stream != null)
+				_stream.Write(Encoding.UTF8.GetBytes($"{_writeQueue.Dequeue()}\n"));	
 		}
 
 		public void Close()
 		{
-			_isOpen = false;
 			_writeThread?.Join();
 			_stream.Close();
 		}
@@ -73,7 +70,6 @@ namespace Appalachia.Services
 
 			_logFile = $"{_folderPath}/{fileName}.log";
 			_stream = new FileStream(_logFile, FileMode.Append);
-			_isOpen = true;
 
 			_stream.Write(Encoding.UTF8.GetBytes($"Starting Log: {fileName} ({DateTime.Now:HH:mm:ss.fff})\n"));
 			if (_writeQueue.Count > 0)
@@ -81,17 +77,9 @@ namespace Appalachia.Services
 		}
 		private void RestartStream()
 		{
-			_isOpen = false;
 			_stream.Close();
+			_stream = new FileStream(_logFile, FileMode.Append);
 
-			// so like. this try block is a *really* stupid solution, but im sure it wont cause any problems at all right? -jolk 2022-05-01
-			try
-			{
-				_stream = new FileStream(_logFile, FileMode.Append);
-			}
-			catch (IOException) { }
-
-			_isOpen = true;
 			if (_writeQueue.Count > 0)
 				StartWriteThread();
 		}

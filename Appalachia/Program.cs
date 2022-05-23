@@ -427,6 +427,8 @@ namespace Appalachia
 		}
 		private static Task LogAsync(LogMessage log)
 		{
+			string write = $"{string.Format("{0, -10}", $"[{log.Severity}]")} {log.ToString()}";
+
 			Console.ForegroundColor = log.Severity switch
 			{
 				LogSeverity.Info => ConsoleColor.White,
@@ -437,13 +439,12 @@ namespace Appalachia
 				LogSeverity.Verbose => ConsoleColor.Green,
 				_ => ConsoleColor.White
 			};
-
-			string write = $"{string.Format("{0, -10}", $"[{log.Severity}]")} {log.ToString()}";
 			Console.WriteLine(write);
+			Console.ResetColor();
+			
 			if (Config.Settings.OutputLogsToFile)
 				Logger.LogToFile(write);
 
-			Console.ResetColor();
 			return Task.CompletedTask;
 		}
 

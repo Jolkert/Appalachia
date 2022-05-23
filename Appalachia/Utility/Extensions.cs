@@ -175,7 +175,7 @@ namespace Appalachia.Utility.Extensions
 			await message.AddReactionAsync(Reactions.RpsScissors);
 		}
 
-		public static bool HasFilteredWord(this SocketMessage message)
+		public static bool HasFilteredWord(this IMessage message)
 		{
 			string[] globalFilteredWords = Util.FilteredWords.GetFilteredWords();
 			string[] serverFilteredWords = Array.Empty<string>();
