@@ -119,7 +119,7 @@ namespace Appalachia.Modules
 			[Command]
 			public async Task DiceRoll(string diceArgument = "d100")
 			{
-				await Program.LogAsync($"Attempting to parse dice from: \"{diceArgument}\"", Source, LogSeverity.Debug);
+				Program.Logger.Debug(Source, $"Attempting to parse dice from: \"{diceArgument}\"");
 
 				// This regex *should* be easy to parse, but I know I'm, stupid sometimes. Just remeber that '\d' is digit, '*' is 0-inf, and '+' is 1-inf. -jolk 2022-01-03
 				// Part of me wonders if it should even be a regex, but like. 100% the easiest way to do it lol -jolk 2022-01-03
@@ -193,7 +193,7 @@ namespace Appalachia.Modules
 				return Colors.MaxRoll;
 			else
 			{
-				Program.LogAsync("You should not see this. If you see this, RngModule.RollModule.GetRollColor() is broken. Go fix that.", Source, LogSeverity.Error);
+				Program.Logger.Error(Source, "You should not see this. If you see this, RngModule.RollModule.GetRollColor() is broken. Go fix that.");
 				return Colors.Default;
 			}
 		}
@@ -204,7 +204,7 @@ namespace Appalachia.Modules
 				rolls[i] = Util.Rand.Next(min, max + 1);
 			int total = rolls.Sum();
 
-			Program.LogAsync($"Roll: {calls}x[{min}, {max}] Result: {{{string.Join(", ", rolls)}}}={total}", Source, LogSeverity.Verbose);
+			Program.Logger.Verbose(Source, $"Roll: {calls}x[{min}, {max}] Result: {{{string.Join(", ", rolls)}}}={total}");
 			return (rolls, total);
 		}
 	}

@@ -21,7 +21,7 @@ namespace Appalachia
 		public static DiscordSocketClient Client;
 		public static readonly string Version = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
-		private static readonly Logger Logger = new Logger();
+		public static Logger Logger { get; private set; }
 		private static readonly DailyTrigger MidnightTrigger = new DailyTrigger();
 		public static readonly BotConfig Config = new BotConfig();
 
@@ -33,7 +33,7 @@ namespace Appalachia
 			}
 			catch (Exception exception)
 			{// if theres an exception we want to log it to the file and just rethrow it -jolk 2022-05-01
-				LogAsync(exception.ToString(), Source, LogSeverity.Critical);
+				Logger.Critical(Source, "Something real bad just happened!", exception);
 				throw;
 			}
 			finally
@@ -45,22 +45,24 @@ namespace Appalachia
 
 		public async Task StartAsync()
 		{
+			Logger = new Logger(Config.Settings.OutputLogsToFile);
+
 			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
 			{
-				await LogAsync("Bot token not found. Make sure you have your bot token set in Resources/config.json or enter token now", "Startup", LogSeverity.Error);
+				Logger.Error("Startup", "Bot token not found. Make sure you have your bot token set in Resources/config.json or enter token now");
 				Console.Write("Enter bot token: ");
 				Config.SetToken(Console.ReadLine());
 			}
 			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
 			{
-				await LogAsync("Command prefix not found. Make sure you have your command prefix set in Resources/config.json or enter prefix now", "Startup", LogSeverity.Error);
+				Logger.Error("Startup", "Command prefix not found. Make sure you have your command prefix set in Resources/config.json or enter prefix now");
 				Console.Write("Enter bot prefix: ");
 				Config.SetPrefix(Console.ReadLine());
 			}
 			if (!Config.Settings.OutputLogsToFile)
-				await LogAsync("OutputLogsToFile false in config. Logs of bot activity will not be saved!", "Startup", LogSeverity.Info);
+				Logger.Info("Startup", "OutputLogsToFile false in config. Logs of bot activity will not be saved!");
 
-			await LogAsync($"Starting Appalachia v{Version}", "Startup");
+			Logger.Info("Startup", $"Starting Appalachia v{Version}");
 			
 			using ServiceProvider services = ConfigureServices();
 			Client = services.GetRequiredService<DiscordSocketClient>();
@@ -114,7 +116,7 @@ namespace Appalachia
 			if (rawChannel is not SocketTextChannel channel) // in practice this should never happen? but like. just in case -jolk 2022-01-10
 				return;
 
-			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]", Source, LogSeverity.Verbose);
+			Logger.Verbose(Source, $"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]");
 
 			SocketGuildUser challenger = channel.Guild.GetUser(challenge.PlayerIds.Challenger);
 			SocketGuildUser opponent = channel.Guild.GetUser(challenge.PlayerIds.Opponent);
@@ -136,7 +138,7 @@ namespace Appalachia
 
 				default:
 					await rawChannel.SendErrorMessageAsync("This isn\'t supposed to happen.\nIf you see this something has gone terribly wrong.");
-					await LogAsync("If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation", Source, LogSeverity.Error);
+					Logger.Error(Source, "If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation");
 					return;
 			}
 
@@ -152,8 +154,7 @@ namespace Appalachia
 			// im wondering if i should like. take a break to clear my brain. ive been staring at vs for too long. im starting to feel the brainpower leaving my soul
 			// and like. i really *shouldnt* write this method in particular in this state. yea im gonna take a break -jolk 2022-01-09 (01:49)
 
-			await LogAsync($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]",
-							Source, LogSeverity.Verbose);
+			Logger.Verbose(Source, $"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]");
 
 			bool isBotMatch = gameData.PlayerIds.Contains(Client.CurrentUser.Id);
 			bool userIsChallenger = reaction.UserId == gameData.PlayerIds.Challenger;
@@ -166,14 +167,14 @@ namespace Appalachia
 				RpsSelection userSelection = status.GetUserSelection();
 
 				gameData.SetChallengerSelection(userSelection);
-				await LogAsync($"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})", Source, LogSeverity.Verbose);
+				Logger.Verbose(Source, $"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})");
 			}
 			else
 			{
 				RpsSelection userSelection = status.GetUserSelection();
 
 				gameData.SetOpponentSelection(userSelection);
-				await LogAsync($"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})", Source, LogSeverity.Verbose);
+				Logger.Verbose(Source, $"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})");
 			}
 
 			// i cant. see above comment. i need to rest my brain. ill do the rest later -jolk 2022-01-09
@@ -246,7 +247,7 @@ namespace Appalachia
 							SendPvpSelectionMessages(challenger, opponent, gameData);
 						else
 						{
-							await LogAsync($"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]", Source, LogSeverity.Verbose);
+							Logger.Verbose(Source, $"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]");
 							Task _ = (await SendBotSelectionMessage(channel, challenger, gameData)).AddRpsReactionsAsync();
 						}
 						break;
@@ -358,11 +359,11 @@ namespace Appalachia
 				try
 				{
 					await message.DeleteAsync();
-					await LogAsync($"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source);
+					Logger.Info(Source, $"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
 				}
 				catch (Discord.Net.HttpException)
 				{
-					await LogAsync($"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}", Source, LogSeverity.Error);
+					Logger.Error(Source, $"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
 				}
 
 			}
@@ -376,7 +377,7 @@ namespace Appalachia
 			foreach (SocketGuild guild in Client.Guilds)
 			{
 				activeServers.Add(guild.Id);
-				await LogAsync($"Connected to {guild.Name} ({guild.Id})", "Startup");
+				Logger.Info("Startup", $"Connected to {guild.Name} ({guild.Id})");
 				Task _ = guild.DownloadUsersAsync();
 				if (!Util.Servers.Exists(guild.Id))
 				{
@@ -388,16 +389,17 @@ namespace Appalachia
 
 			int serversRemoved = Util.Servers.RemoveMissingIds(activeServers.ToArray());
 			if (serversRemoved > 0)
-				await LogAsync($"Removed {serversRemoved} extraneous server{(serversRemoved != 1 ? "s" : "")} from database", "Startup");
+				Logger.Info("Startup", $"Removed {serversRemoved} extraneous server{(serversRemoved != 1 ? "s" : "")} from database");
 
-			await LogAsync($"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!", "Startup");
+			Logger.Info("Startup", $"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!");
 		}
-		private async Task OnServerJoinAsync(SocketGuild guild)
+		private Task OnServerJoinAsync(SocketGuild guild)
 		{
-			await LogAsync($"Joined {guild.Name} ({guild.Id})", "ServerJoin");
+			Logger.Info("ServerJoin", $"Joined {guild.Name} ({guild.Id})");
 			Task _ = guild.DownloadUsersAsync();
 			(ulong announcementChannelId, ulong quoteChannelId) = GetImportantChannelIds(guild);
 			Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
+			return Task.CompletedTask;
 		}
 		private (ulong announcements, ulong quotes) GetImportantChannelIds(SocketGuild guild)
 		{
@@ -413,40 +415,19 @@ namespace Appalachia
 
 			return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
 		}
-		private async Task OnGuildLeaveAsync(SocketGuild guild)
+		private Task OnGuildLeaveAsync(SocketGuild guild)
 		{
 			Util.Servers.RemoveServer(guild.Id);
-			await LogAsync($"Removed data for {guild.GetNameWithId()}", Source);
-		}
-
-		public static Task LogAsync(string message, string source, LogSeverity severity = LogSeverity.Info)
-		{
-			if (Config == null)
-				return Task.CompletedTask;
-			return LogAsync(new LogMessage(severity, source, message.Replace("\n", "\\n")));
-		}
-		private static Task LogAsync(LogMessage log)
-		{
-			string write = $"{string.Format("{0, -10}", $"[{log.Severity}]")} {log.ToString()}";
-
-			Console.ForegroundColor = log.Severity switch
-			{
-				LogSeverity.Info => ConsoleColor.White,
-				LogSeverity.Debug => ConsoleColor.Magenta,
-				LogSeverity.Warning => ConsoleColor.Yellow,
-				LogSeverity.Error => ConsoleColor.Red,
-				LogSeverity.Critical => ConsoleColor.DarkRed,
-				LogSeverity.Verbose => ConsoleColor.Green,
-				_ => ConsoleColor.White
-			};
-			Console.WriteLine(write);
-			Console.ResetColor();
-			
-			if (Config.Settings.OutputLogsToFile)
-				Logger.LogToFile(write);
-
+			Logger.Info(Source, $"Removed data for {guild.GetNameWithId()}");
 			return Task.CompletedTask;
 		}
+
+		private Task LogAsync(LogMessage message)
+		{
+			Logger.Log(message);
+			return Task.CompletedTask;
+		}
+
 
 		public static void Stop()
 		{

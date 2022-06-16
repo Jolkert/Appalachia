@@ -30,7 +30,8 @@ namespace Appalachia.Data
 		protected void ReloadJson(bool verbose = false)
 		{
 			_data = JsonConvert.DeserializeObject<T>(File.ReadAllText(_fileName), verbose ? _verboseSettings : null);
-			Program.LogAsync($"{GetType().Name} reloaded!", GetType().Name);
+			if (Program.Logger != null)
+				Program.Logger.Info(GetType().Name, $"{GetType().Name} reloaded!");
 		}
 		protected void WriteJson(bool verbose = false)
 		{

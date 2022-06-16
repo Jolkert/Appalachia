@@ -15,7 +15,7 @@ namespace Appalachia.Modules
 		[Command("reload"), Name(Source + "/Reload")]
 		public async Task Reload()
 		{
-			await Program.LogAsync("Reloading json files...", Source);
+			Program.Logger.Info(Source, "Reloading json files...");
 
 			foreach (IJsonDataHolder data in Util.DataHolders)
 			{
@@ -30,10 +30,11 @@ namespace Appalachia.Modules
 		}
 
 		[Command("shutdown"), Alias("stop"), Name(Source + "Shutdown")]
-		public async Task Shutdown()
+		public Task Shutdown()
 		{
-			await Program.LogAsync("Shutting down bot...", Source);
+			Program.Logger.Info(Source, "Shutting down bot...");
 			Program.Stop();
+			return Task.CompletedTask;
 		}
 	}
 }

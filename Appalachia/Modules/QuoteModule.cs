@@ -125,7 +125,7 @@ namespace Appalachia.Modules
 		}
 		private async Task SendNotSpecifiedErrorAsync()
 		{
-			await Program.LogAsync($"No quote channel in server [{Context.Guild?.GetNameWithId() ?? Context.User.GetFullUsername()}]", Source, LogSeverity.Verbose);
+			Program.Logger.Verbose(Source, $"No quote channel in server [{Context.Guild?.GetNameWithId() ?? Context.User.GetFullUsername()}]");
 			await Context.Channel.SendErrorMessageAsync("This server has no defined quotes channel!");
 		}
 	}

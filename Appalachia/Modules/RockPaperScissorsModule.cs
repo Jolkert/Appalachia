@@ -48,7 +48,7 @@ namespace Appalachia.Modules
 
 					RpsSelection botSelection = (RpsSelection)(1 << Util.Rand.Next(3));
 					RpsGame gameData = new RpsGame(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore, botSelection);
-					await Program.LogAsync($"Appalachia selects [{botSelection}] in match [#{gameData.MatchId:x6}] against [{Context.User.GetFullUsername()}]", Source, LogSeverity.Verbose);
+					Program.Logger.Verbose(Source, $"Appalachia selects [{botSelection}] in match [#{gameData.MatchId:x6}] against [{Context.User.GetFullUsername()}]");
 
 					gameData.AddToDatabase();
 					IMessage message = await Program.SendBotSelectionMessage(Context.Channel, Context.User, gameData);

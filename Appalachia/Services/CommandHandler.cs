@@ -57,20 +57,22 @@ namespace Appalachia.Services
 				stopwatch.Stop();
 
 				if (result.IsSuccess)
-					await Program.LogAsync($"Command took {stopwatch.ElapsedMilliseconds} ms", Source);
+					Program.Logger.Info(Source, $"Command took {stopwatch.ElapsedMilliseconds} ms");
 			});
 
 			return Task.CompletedTask;
 		}
 
-		private async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
+		private Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
 		{
 			if (!command.IsSpecified)
-				await Program.LogAsync($"Unknown Command! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{context.Message}]", Source);
+				Program.Logger.Info(Source, $"Unknown Command! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{context.Message}]");
 			else if (result.IsSuccess)
-				await Program.LogAsync($"[{context.User.GetFullUsername()}] ran [{command.Value.Name}] in [{context.GetGuildChannelName()}]", Source);
+				Program.Logger.Info(Source, $"[{context.User.GetFullUsername()}] ran [{command.Value.Name}] in [{context.GetGuildChannelName()}]");
 			else
-				await Program.LogAsync($"Something has gone terribly wrong! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{result}]", Source, LogSeverity.Warning);
+				Program.Logger.Warn(Source, $"Something has gone terribly wrong! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{result}]");
+
+			return Task.CompletedTask;
 		}
 	}
 }
