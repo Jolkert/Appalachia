@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Version>2.0.0.0</Version>
     <Authors>Jolkert</Authors>
     <RepositoryUrl>https://github.com/Jolkert/Appalachia</RepositoryUrl>
