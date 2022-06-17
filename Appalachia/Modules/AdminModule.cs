@@ -87,6 +87,23 @@ namespace Appalachia.Modules
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
+
+			[Command("defaultrole"), Alias("defrole"), Name(Source)]
+			public async Task AccessDefaultRole()
+			{
+				SocketRole role = Context.Guild.GetDefaultRole();
+				EmbedBuilder embed = new EmbedBuilder().WithTitle($"{Context.Guild.Name} Information")
+													   .WithColor(Context.Guild.GetColor())
+													   .WithThumbnailUrl(Context.Guild.IconUrl)
+													   .WithFooter($"To change the default role, run {Program.Config.Settings.CommandPrefix}admin set defaultrole <#new_channel>");
+
+				if (role == null)
+					embed.WithDescription($"No default role is set for {Context.Guild.Name}");
+				else
+					embed.WithDescription($"{role.Mention} is the default role in {Context.Guild.Name}");
+
+				await Context.Channel.SendEmbedAsync(embed);
+			}
 		}
 
 		[Group("set"), Alias("modify", "mod", "edit", "change"), Name(Source)]
@@ -289,6 +306,41 @@ namespace Appalachia.Modules
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
 						Program.Logger.Error(Source, "This message should never appear. If you see this something\'s up with the quote channel modify command.");
+						return;
+				}
+
+				await Context.Channel.SendEmbedAsync(embed);
+			}
+
+			[Command("defaultrole"), Alias("defrole"), Name(Source)]
+			public async Task ModifyDefaultRole(SocketRole role)
+			{
+				EmbedBuilder embed = new EmbedBuilder()
+					.WithColor(Context.Guild.GetColor())
+					.WithThumbnailUrl(Context.Guild.IconUrl);
+
+				switch (Context.Guild.SetDefaultRole(role))
+				{
+					case ServerData.ModificationResult.Success:
+						embed.WithTitle("Server information modified!")
+							 .WithDescription($"Default role for {Context.Guild.Name}\nis now {role.Mention}");
+
+						Program.Logger.Verbose(Source, $"Default role of {Context.Guild.GetNameWithId()} changed to {role.GetNameWithId()}!");
+						break;
+
+					case ServerData.ModificationResult.Unchanged:
+						embed.WithTitle("Nothing was changed!")
+							 .WithDescription($"{role.Mention} is already the default role\nin {Context.Guild.Name}");
+
+						Program.Logger.Verbose(Source, $"Default role of {Context.Guild.GetNameWithId()} was already {role.GetNameWithId()}!");
+						break;
+
+					default:
+						await Context.Channel.SendErrorMessageAsync("Could not change default role!\n" +
+							"This really should never happen.\n" +
+							"If you see this message, there\'s a bug somewhere and something has gone wrong");
+
+						Program.Logger.Error(Source, "This message should never appear. If you see this something\'s up with the quote channel modify default role.");
 						return;
 				}
 

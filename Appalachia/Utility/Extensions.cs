@@ -22,7 +22,6 @@ namespace Appalachia.Utility.Extensions
 			{Reactions.RpsPaper.Name, ReactionStatus.RpsPaper},
 			{Reactions.RpsScissors.Name, ReactionStatus.RpsScissors}
 		};
-		private const AllowedMentionTypes mentionAll = AllowedMentionTypes.Everyone | AllowedMentionTypes.Users | AllowedMentionTypes.Roles;
 
 		// these used to be in Util, but then i realized that I can just make them extension methods instead -jolk 2022-01-11
 		public static string GetFullUsername(this IUser user)
@@ -63,6 +62,10 @@ namespace Appalachia.Utility.Extensions
 		public static string GetNameWithId(this IChannel channel)
 		{
 			return $"{channel.Name}({channel.Id})";
+		}
+		public static string GetNameWithId(this IRole role)
+		{
+			return $"{role.Name}({role.Id})";
 		}
 		public static bool TryGetUser(this IGuild guild, string userArg, out SocketGuildUser user)
 		{
@@ -229,6 +232,14 @@ namespace Appalachia.Utility.Extensions
 		{
 			return guild.GetTextChannel(Util.Servers.GetAnnouncementChannelId(guild.Id));
 		}
+		public static SocketRole GetDefaultRole(this SocketGuild guild)
+		{
+			ulong defaultRoleId = Util.Servers.GetDefaultRoleId(guild.Id);
+			if (defaultRoleId == 0)
+				return null;
+			else
+				return guild.GetRole(defaultRoleId);
+		}
 		public static uint GetColor(this SocketGuild guild)
 		{
 			return Util.Servers.GetColorOrDefault(guild.Id);
@@ -260,6 +271,11 @@ namespace Appalachia.Utility.Extensions
 		{
 			return Util.Servers.SetAnnouncementChannelId(guild.Id, channel?.Id ?? 0);
 		}
+		public static ServerData.ModificationResult SetDefaultRole(this SocketGuild guild, SocketRole role)
+		{
+			return Util.Servers.SetDefaultRoleId(guild.Id, role?.Id ?? 0);
+		}
+
 		public static ServerData.ModificationResult SetColor(this SocketGuild guild, uint color)
 		{
 			return Util.Servers.SetColor(guild.Id, color);

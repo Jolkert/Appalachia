@@ -65,6 +65,10 @@ namespace Appalachia.Data
 		{
 			return _data.GetValueOrDefault(guildId)?.AnnouncementChannelId ?? 0;
 		}
+		public ulong GetDefaultRoleId(ulong guildId)
+		{
+			return _data.GetValueOrDefault(guildId)?.DefaultRoleId ?? 0;
+		}
 		public uint GetColorOrDefault(ulong guildId)
 		{
 			return _data.GetValueOrDefault(guildId)?.Color ?? Colors.Default;
@@ -125,9 +129,21 @@ namespace Appalachia.Data
 				return ModificationResult.NotFound;
 
 			if (server.AnnouncementChannelId == newAnnouncementChannelId)
-				return ModificationResult.NotFound;
+				return ModificationResult.Unchanged;
 
 			server.AnnouncementChannelId = newAnnouncementChannelId;
+			WriteJson();
+			return ModificationResult.Success;
+		}
+		public ModificationResult SetDefaultRoleId(ulong guildId, ulong newDefaultRoleId)
+		{
+			if (!_data.TryGetValue(guildId, out Server server))
+				return ModificationResult.NotFound;
+
+			if (server.DefaultRoleId == newDefaultRoleId)
+				return ModificationResult.Unchanged;
+
+			server.DefaultRoleId = newDefaultRoleId;
 			WriteJson();
 			return ModificationResult.Success;
 		}
@@ -250,10 +266,11 @@ namespace Appalachia.Data
 	{
 		public ulong AnnouncementChannelId { get; set; }
 		public ulong QuoteChannelId { get; set; }
+		public ulong DefaultRoleId { get; set; }
 		public uint Color { get; set; }
 		public List<string> FilteredWords { get; set; }
 		public bool ShouldMatchSubstitutions { get; set; } // idk what else to call this. its whether or not to check for common fiter-avoidance characters -jolk 2022-05-02
-		// oops this should be in here lol -jolk 2022-05-05
+														   // oops this should be in here lol -jolk 2022-05-05
 
 		// I really dont think this should be a dictionary. I kinda wanna make this like a normal list or smth that i sort on modification
 		// that would make a lot more sense but would be a bit of effort to go refactor everything. idk prob eventually -jolk 2022-02-14

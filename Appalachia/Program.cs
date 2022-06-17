@@ -63,7 +63,7 @@ namespace Appalachia
 				Logger.Info("Startup", "OutputLogsToFile false in config. Logs of bot activity will not be saved!");
 
 			Logger.Info("Startup", $"Starting Appalachia v{Version}");
-			
+
 			using ServiceProvider services = ConfigureServices();
 			Client = services.GetRequiredService<DiscordSocketClient>();
 			Client.Log += LogAsync;
@@ -72,6 +72,7 @@ namespace Appalachia
 			Client.LeftGuild += OnGuildLeaveAsync;
 			Client.ReactionAdded += OnReactAsync;
 			Client.MessageReceived += FilterWordsAsync;
+			Client.UserJoined += AddDefaultRole;
 
 			services.GetRequiredService<CommandService>().Log += LogAsync;
 			await Client.LoginAsync(TokenType.Bot, Config.Settings.Token);
@@ -367,6 +368,16 @@ namespace Appalachia
 				}
 
 			}
+		}
+
+		private async Task AddDefaultRole(SocketGuildUser user)
+		{
+			SocketRole role = user.Guild.GetDefaultRole();
+			if (role == null)
+				return;
+
+			await user.AddRoleAsync(role);
+			Logger.Info(Source, $"Added default role {role.GetNameWithId()} to user new user {user.GetFullUsername()} in {user.Guild.GetNameWithId()}");
 		}
 
 		private async Task OnReadyAsync()
