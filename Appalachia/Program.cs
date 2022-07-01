@@ -68,7 +68,7 @@ namespace Appalachia
 			Client = services.GetRequiredService<DiscordSocketClient>();
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
-			Client.JoinedGuild += OnServerJoinAsync;
+			Client.JoinedGuild += OnGuildJoinAsync;
 			Client.LeftGuild += OnGuildLeaveAsync;
 			Client.ReactionAdded += OnReactAsync;
 			Client.MessageReceived += FilterWordsAsync;
@@ -223,7 +223,7 @@ namespace Appalachia
 							challenger.IncrementRpsWins();
 							opponent.IncrementRpsLosses();
 
-							previousElos = Util.Servers.UpdateElo(challenger, opponent);
+							previousElos = Util.Guilds.UpdateElo(challenger, opponent);
 						}
 
 						await channel.SendEmbedAsync(GenerateMatchResultEmbed(gameData, challenger, opponent, previousElos));
@@ -236,7 +236,7 @@ namespace Appalachia
 							opponent.IncrementRpsWins();
 							challenger.IncrementRpsLosses();
 
-							previousElos = Util.Servers.UpdateElo(opponent, challenger);
+							previousElos = Util.Guilds.UpdateElo(opponent, challenger);
 						}
 
 						await channel.SendEmbedAsync(GenerateMatchResultEmbed(gameData, opponent, challenger, previousElos));
@@ -384,36 +384,36 @@ namespace Appalachia
 		{
 			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
 
-			List<ulong> activeServers = new List<ulong>();
+			List<ulong> activeGuilds = new List<ulong>();
 			foreach (SocketGuild guild in Client.Guilds)
 			{
-				activeServers.Add(guild.Id);
+				activeGuilds.Add(guild.Id);
 				Logger.Info("Startup", $"Connected to {guild.Name} ({guild.Id})");
 				Task _ = guild.DownloadUsersAsync();
-				if (!Util.Servers.Exists(guild.Id))
+				if (!Util.Guilds.Exists(guild.Id))
 				{
 					(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
-					Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
+					Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
 				}
 			}
 
-			int serversRemoved = Util.Servers.RemoveMissingIds(activeServers.ToArray());
-			if (serversRemoved > 0)
-				Logger.Info("Startup", $"Removed {serversRemoved} extraneous server{(serversRemoved != 1 ? "s" : "")} from database");
+			int guildsRemoved = Util.Guilds.RemoveMissingIds(activeGuilds.ToArray());
+			if (guildsRemoved > 0)
+				Logger.Info("Startup", $"Removed {guildsRemoved} extraneous guild{(guildsRemoved != 1 ? "s" : "")} from database");
 
-			Logger.Info("Startup", $"Bot is active in {Client.Guilds.Count} server{(Client.Guilds.Count != 1 ? "s" : "")}!");
+			Logger.Info("Startup", $"Bot is active in {Client.Guilds.Count} guild{(Client.Guilds.Count != 1 ? "s" : "")}!");
 		}
-		private Task OnServerJoinAsync(SocketGuild guild)
+		private Task OnGuildJoinAsync(SocketGuild guild)
 		{
-			Logger.Info("ServerJoin", $"Joined {guild.Name} ({guild.Id})");
+			Logger.Info("GuildJoin", $"Joined {guild.Name} ({guild.Id})");
 			Task _ = guild.DownloadUsersAsync();
 			(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
-			Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
+			Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
 			return Task.CompletedTask;
 		}
 		private Task OnGuildLeaveAsync(SocketGuild guild)
 		{
-			Util.Servers.RemoveServer(guild.Id);
+			Util.Guilds.RemoveGuild(guild.Id);
 			Logger.Info(Source, $"Removed data for {guild.GetNameWithId()}");
 			return Task.CompletedTask;
 		}

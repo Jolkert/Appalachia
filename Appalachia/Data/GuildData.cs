@@ -7,30 +7,30 @@ using System.Linq;
 
 namespace Appalachia.Data
 {
-	public class ServerData : BaseJsonDataHolder<Dictionary<ulong, Server>>
+	public class GuildData : BaseJsonDataHolder<Dictionary<ulong, Guild>>
 	{
-		// currently debating whether i should put leaderboards in ServerData or make it its own thing
+		// currently debating whether i should put leaderboards in GuildData or make it its own thing
 		// making it its own thing *does* open up the possibility of global leaderboards. which could be interesting
 		// either way its 4am. im going to sleep -jolk 2022-01-10
-		private const string ServersFile = "servers.json";
+		private const string GuildsFile = "guilds.json";
 
-		public ServerData() : base(ServersFile, new Dictionary<ulong, Server>()) { }
+		public GuildData() : base(GuildsFile, new Dictionary<ulong, Guild>()) { }
 
 		// i did it. these are in Extensions now -jolk 2022-02-15
 		// also cleaned up the methods in here. still like. dont use them outside of the extensions tho. thanks -jolk 2022-02-15
-		public void AddServer(ulong guildId, Server server)
+		public void AddGuild(ulong guildId, Guild guild)
 		{
 			if (!Exists(guildId))
 			{
-				_data.Add(guildId, server);
+				_data.Add(guildId, guild);
 				WriteJson();
 			}
 		}
-		public void AddServer(ulong guildId, ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
+		public void AddGuild(ulong guildId, ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
 		{
-			AddServer(guildId, new Server(announcementChannelId, quoteChannelId, color));
+			AddGuild(guildId, new Guild(announcementChannelId, quoteChannelId, color));
 		}
-		public void RemoveServer(ulong guildId)
+		public void RemoveGuild(ulong guildId)
 		{
 			if (Exists(guildId))
 			{
@@ -41,11 +41,11 @@ namespace Appalachia.Data
 		public int RemoveMissingIds(params ulong[] guildIds)
 		{
 			int guildsRemoved = 0;
-			foreach (KeyValuePair<ulong, Server> pair in _data)
+			foreach (KeyValuePair<ulong, Guild> pair in _data)
 			{
 				if (!guildIds.Contains(pair.Key))
 				{
-					RemoveServer(pair.Key);
+					RemoveGuild(pair.Key);
 					guildsRemoved++;
 				}
 			}
@@ -53,7 +53,7 @@ namespace Appalachia.Data
 			return guildsRemoved;
 		}
 		public bool Exists(ulong guildId)
-		{// Now that I added this to AddServer I dont think i need this but im gonna keep it anyways -jolk 2022-01-04
+		{// Now that I added this to AddGuild I dont think i need this but im gonna keep it anyways -jolk 2022-01-04
 			return _data.ContainsKey(guildId);
 		}
 
@@ -78,18 +78,18 @@ namespace Appalachia.Data
 			return _data.GetValueOrDefault(guildId)?.FilteredWords.ToArray();
 		}
 
-		public Server.UserScore GetUserScore(ulong guildId, ulong userId)
+		public Guild.UserScore GetUserScore(ulong guildId, ulong userId)
 		{
 			return _data.GetValueOrDefault(guildId)?.RpsLeaderboard.GetValueOrDefault(userId);
 		}
 		public int GetUserRank(ulong guildId, ulong userId)
 		{
-			KeyValuePair<ulong, Server.UserScore>[] leaderboard = GetSortedRpsLeaderboard(guildId);
+			KeyValuePair<ulong, Guild.UserScore>[] leaderboard = GetSortedRpsLeaderboard(guildId);
 
 			int rank = 1;
 			for (int i = 0; i < leaderboard.Length; i++)
 			{
-				KeyValuePair<ulong, Server.UserScore> pair = leaderboard[i];
+				KeyValuePair<ulong, Guild.UserScore> pair = leaderboard[i];
 
 				if (i > 0 && !pair.Equals(leaderboard[i - 1]))
 					rank = i + 1;
@@ -100,7 +100,7 @@ namespace Appalachia.Data
 
 			return -1;
 		}
-		public KeyValuePair<ulong, Server.UserScore>[] GetSortedRpsLeaderboard(ulong guildId)
+		public KeyValuePair<ulong, Guild.UserScore>[] GetSortedRpsLeaderboard(ulong guildId)
 		{
 			return _data.GetValueOrDefault(guildId)?.RpsLeaderboard.ToArray()
 						.OrderByDescending(pair => pair.Value.Elo)
@@ -113,65 +113,65 @@ namespace Appalachia.Data
 
 		public ModificationResult SetQuoteChannelId(ulong guildId, ulong newQuoteChannelId)
 		{
-			if (!_data.TryGetValue(guildId, out Server server))
+			if (!_data.TryGetValue(guildId, out Guild guild))
 				return ModificationResult.NotFound;
 
-			if (server.QuoteChannelId == newQuoteChannelId)
+			if (guild.QuoteChannelId == newQuoteChannelId)
 				return ModificationResult.Unchanged;
 
-			server.QuoteChannelId = newQuoteChannelId;
+			guild.QuoteChannelId = newQuoteChannelId;
 			WriteJson();
 			return ModificationResult.Success;
 		}
 		public ModificationResult SetAnnouncementChannelId(ulong guildId, ulong newAnnouncementChannelId)
 		{
-			if (!_data.TryGetValue(guildId, out Server server))
+			if (!_data.TryGetValue(guildId, out Guild guild))
 				return ModificationResult.NotFound;
 
-			if (server.AnnouncementChannelId == newAnnouncementChannelId)
+			if (guild.AnnouncementChannelId == newAnnouncementChannelId)
 				return ModificationResult.Unchanged;
 
-			server.AnnouncementChannelId = newAnnouncementChannelId;
+			guild.AnnouncementChannelId = newAnnouncementChannelId;
 			WriteJson();
 			return ModificationResult.Success;
 		}
 		public ModificationResult SetDefaultRoleId(ulong guildId, ulong newDefaultRoleId)
 		{
-			if (!_data.TryGetValue(guildId, out Server server))
+			if (!_data.TryGetValue(guildId, out Guild guild))
 				return ModificationResult.NotFound;
 
-			if (server.DefaultRoleId == newDefaultRoleId)
+			if (guild.DefaultRoleId == newDefaultRoleId)
 				return ModificationResult.Unchanged;
 
-			server.DefaultRoleId = newDefaultRoleId;
+			guild.DefaultRoleId = newDefaultRoleId;
 			WriteJson();
 			return ModificationResult.Success;
 		}
 		public ModificationResult SetColor(ulong guildId, uint color)
 		{
-			if (!_data.TryGetValue(guildId, out Server server))
+			if (!_data.TryGetValue(guildId, out Guild guild))
 				return ModificationResult.NotFound;
 
-			if (server.Color == color)
+			if (guild.Color == color)
 				return ModificationResult.Unchanged;
 
-			server.Color = color;
+			guild.Color = color;
 			WriteJson();
 			return ModificationResult.Success;
 		}
 
 		public ModificationResult AddFilteredWords(ulong guildId, params string[] words)
 		{
-			Server server = _data.GetValueOrDefault(guildId);
-			if (server == null)
+			Guild guild = _data.GetValueOrDefault(guildId);
+			if (guild == null)
 				return ModificationResult.NotFound;
 
 			int count = 0;
 			foreach (string word in words.Select(str => str.ToLowerInvariant()))
 			{
-				if (!server.FilteredWords.Contains(word) && word != "")
+				if (!guild.FilteredWords.Contains(word) && word != "")
 				{
-					server.FilteredWords.Add(word);
+					guild.FilteredWords.Add(word);
 					count++;
 				}
 			}
@@ -186,11 +186,11 @@ namespace Appalachia.Data
 		}
 		public ModificationResult RemoveFilteredWords(ulong guildId, params string[] words)
 		{
-			Server server = _data.GetValueOrDefault(guildId);
-			if (server == null)
+			Guild guild = _data.GetValueOrDefault(guildId);
+			if (guild == null)
 				return ModificationResult.NotFound;
 
-			if (server.FilteredWords.RemoveAll(str => words.Contains(str.ToLowerInvariant())) > 0)
+			if (guild.FilteredWords.RemoveAll(str => words.Contains(str.ToLowerInvariant())) > 0)
 			{
 				WriteJson();
 				return ModificationResult.Success;
@@ -200,37 +200,37 @@ namespace Appalachia.Data
 		}
 		public ModificationResult ClearFilteredWords(ulong guildId)
 		{
-			Server server = _data.GetValueOrDefault(guildId);
-			if (server == null)
+			Guild guild = _data.GetValueOrDefault(guildId);
+			if (guild == null)
 				return ModificationResult.NotFound;
 
-			if (server.FilteredWords.Count == 0)
+			if (guild.FilteredWords.Count == 0)
 				return ModificationResult.Unchanged;
 
-			server.FilteredWords.Clear();
+			guild.FilteredWords.Clear();
 			WriteJson();
 			return ModificationResult.Success;
 		}
 
 		public bool IncrementRpsWins(ulong guildId, ulong userId)
 		{
-			if (!_data.TryGetValue(guildId, out Server server))
+			if (!_data.TryGetValue(guildId, out Guild guild))
 				return false;
-			if (!server.RpsLeaderboard.ContainsKey(userId))
-				server.RpsLeaderboard.Add(userId, new Server.UserScore());
+			if (!guild.RpsLeaderboard.ContainsKey(userId))
+				guild.RpsLeaderboard.Add(userId, new Guild.UserScore());
 
-			server.RpsLeaderboard[userId].Wins++;
+			guild.RpsLeaderboard[userId].Wins++;
 			WriteJson();
 			return true;
 		}
 		public bool IncrementRpsLosses(ulong guildId, ulong userId)
 		{
-			if (!_data.TryGetValue(guildId, out Server server))
+			if (!_data.TryGetValue(guildId, out Guild guild))
 				return false;
-			if (!server.RpsLeaderboard.ContainsKey(userId))
-				server.RpsLeaderboard.Add(userId, new Server.UserScore());
+			if (!guild.RpsLeaderboard.ContainsKey(userId))
+				guild.RpsLeaderboard.Add(userId, new Guild.UserScore());
 
-			server.RpsLeaderboard[userId].Losses++;
+			guild.RpsLeaderboard[userId].Losses++;
 			WriteJson();
 			return true;
 		}
@@ -239,7 +239,7 @@ namespace Appalachia.Data
 		{
 			return UpdateElo(winner.GetGuildRpsScore(), loser.GetGuildRpsScore());
 		}
-		public (int, int) UpdateElo(Server.UserScore p1Score, Server.UserScore p2Score)
+		public (int, int) UpdateElo(Guild.UserScore p1Score, Guild.UserScore p2Score)
 		{
 			(int, int) previousElo = (p1Score.Elo, p2Score.Elo);
 
@@ -262,7 +262,7 @@ namespace Appalachia.Data
 		}
 	}
 
-	public class Server
+	public class Guild
 	{
 		public ulong AnnouncementChannelId { get; set; }
 		public ulong QuoteChannelId { get; set; }
@@ -277,7 +277,7 @@ namespace Appalachia.Data
 		// TODO: that ^
 		public Dictionary<ulong, UserScore> RpsLeaderboard { get; set; } // not sure why that wasnt a property before. knew something looked off. oops -jolk 2022-02-15
 
-		public Server(ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
+		public Guild(ulong announcementChannelId = 0, ulong quoteChannelId = 0, uint color = Colors.Default)
 		{
 			this.AnnouncementChannelId = announcementChannelId;
 			this.QuoteChannelId = quoteChannelId;

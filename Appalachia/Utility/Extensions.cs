@@ -181,15 +181,15 @@ namespace Appalachia.Utility.Extensions
 		public static bool HasFilteredWord(this IMessage message)
 		{
 			string[] globalFilteredWords = Util.FilteredWords.GetFilteredWords();
-			string[] serverFilteredWords = Array.Empty<string>();
+			string[] guildFilteredWords = Array.Empty<string>();
 			if (message.Channel is SocketGuildChannel channel)
-				serverFilteredWords = channel.Guild.GetFilteredWords();
+				guildFilteredWords = channel.Guild.GetFilteredWords();
 
-			if (globalFilteredWords.Length == 0 && serverFilteredWords.Length == 0)
+			if (globalFilteredWords.Length == 0 && guildFilteredWords.Length == 0)
 				return false;
 
 			// this might get a tad overzealous? idk i'll (hopefully) come back to it later or smth -jolk 2022-02-14
-			string regexString = string.Join('|', globalFilteredWords.Concat(serverFilteredWords)).ToLowerInvariant()
+			string regexString = string.Join('|', globalFilteredWords.Concat(guildFilteredWords)).ToLowerInvariant()
 								.Replace("i", "[i!1]")
 								.Replace("e", "[e3]")
 								.Replace("o", "[o0]")
@@ -221,20 +221,20 @@ namespace Appalachia.Utility.Extensions
 			return String.Concat(Enumerable.Repeat(str, times));
 		}
 
-		// Server Data Extensions - please always use these instead of ever calling instance methods of Util.Servers thanks -jolk 2022-02-15
+		// Guild Data Extensions - please always use these instead of ever calling instance methods of Util.Guilds thanks -jolk 2022-02-15
 
 		// Accessors
 		public static SocketTextChannel GetQuoteChannel(this SocketGuild guild)
 		{
-			return guild.GetTextChannel(Util.Servers.GetQuoteChannelId(guild.Id));
+			return guild.GetTextChannel(Util.Guilds.GetQuoteChannelId(guild.Id));
 		}
 		public static SocketTextChannel GetAnnouncementChannel(this SocketGuild guild)
 		{
-			return guild.GetTextChannel(Util.Servers.GetAnnouncementChannelId(guild.Id));
+			return guild.GetTextChannel(Util.Guilds.GetAnnouncementChannelId(guild.Id));
 		}
 		public static SocketRole GetDefaultRole(this SocketGuild guild)
 		{
-			ulong defaultRoleId = Util.Servers.GetDefaultRoleId(guild.Id);
+			ulong defaultRoleId = Util.Guilds.GetDefaultRoleId(guild.Id);
 			if (defaultRoleId == 0)
 				return null;
 			else
@@ -242,11 +242,11 @@ namespace Appalachia.Utility.Extensions
 		}
 		public static uint GetColor(this SocketGuild guild)
 		{
-			return Util.Servers.GetColorOrDefault(guild.Id);
+			return Util.Guilds.GetColorOrDefault(guild.Id);
 		}
 		public static string[] GetFilteredWords(this SocketGuild guild)
 		{
-			return Util.Servers.GetFilteredWords(guild.Id);
+			return Util.Guilds.GetFilteredWords(guild.Id);
 		}
 		public static (ulong announcements, ulong quotes) GetImportantChannelIds(this SocketGuild guild)
 		{
@@ -263,48 +263,48 @@ namespace Appalachia.Utility.Extensions
 			return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
 		}
 
-		public static KeyValuePair<ulong, Server.UserScore>[] GetRpsLeaderboard(this SocketGuild guild)
+		public static KeyValuePair<ulong, Guild.UserScore>[] GetRpsLeaderboard(this SocketGuild guild)
 		{
-			return Util.Servers.GetSortedRpsLeaderboard(guild.Id);
+			return Util.Guilds.GetSortedRpsLeaderboard(guild.Id);
 		}
-		public static Server.UserScore GetGuildRpsScore(this SocketGuildUser user)
+		public static Guild.UserScore GetGuildRpsScore(this SocketGuildUser user)
 		{
-			return Util.Servers.GetUserScore(user.Guild.Id, user.Id);
+			return Util.Guilds.GetUserScore(user.Guild.Id, user.Id);
 		}
 		public static int GetGuildRpsRank(this SocketGuildUser user)
 		{
-			return Util.Servers.GetUserRank(user.Guild.Id, user.Id);
+			return Util.Guilds.GetUserRank(user.Guild.Id, user.Id);
 		}
 
 		// Modifiers
-		public static ServerData.ModificationResult SetQuoteChannel(this SocketGuild guild, SocketTextChannel channel)
+		public static GuildData.ModificationResult SetQuoteChannel(this SocketGuild guild, SocketTextChannel channel)
 		{
-			return Util.Servers.SetQuoteChannelId(guild.Id, channel?.Id ?? 0);
+			return Util.Guilds.SetQuoteChannelId(guild.Id, channel?.Id ?? 0);
 		}
-		public static ServerData.ModificationResult SetAnnouncementChannel(this SocketGuild guild, SocketTextChannel channel)
+		public static GuildData.ModificationResult SetAnnouncementChannel(this SocketGuild guild, SocketTextChannel channel)
 		{
-			return Util.Servers.SetAnnouncementChannelId(guild.Id, channel?.Id ?? 0);
+			return Util.Guilds.SetAnnouncementChannelId(guild.Id, channel?.Id ?? 0);
 		}
-		public static ServerData.ModificationResult SetDefaultRole(this SocketGuild guild, SocketRole role)
+		public static GuildData.ModificationResult SetDefaultRole(this SocketGuild guild, SocketRole role)
 		{
-			return Util.Servers.SetDefaultRoleId(guild.Id, role?.Id ?? 0);
+			return Util.Guilds.SetDefaultRoleId(guild.Id, role?.Id ?? 0);
 		}
 
-		public static ServerData.ModificationResult SetColor(this SocketGuild guild, uint color)
+		public static GuildData.ModificationResult SetColor(this SocketGuild guild, uint color)
 		{
-			return Util.Servers.SetColor(guild.Id, color);
+			return Util.Guilds.SetColor(guild.Id, color);
 		}
-		public static ServerData.ModificationResult AddFilteredWords(this SocketGuild guild, params string[] words)
+		public static GuildData.ModificationResult AddFilteredWords(this SocketGuild guild, params string[] words)
 		{
-			return Util.Servers.AddFilteredWords(guild.Id, words);
+			return Util.Guilds.AddFilteredWords(guild.Id, words);
 		}
-		public static ServerData.ModificationResult RemoveFilteredWords(this SocketGuild guild, params string[] words)
+		public static GuildData.ModificationResult RemoveFilteredWords(this SocketGuild guild, params string[] words)
 		{
-			return Util.Servers.RemoveFilteredWords(guild.Id, words);
+			return Util.Guilds.RemoveFilteredWords(guild.Id, words);
 		}
-		public static ServerData.ModificationResult ClearFilteredWords(this SocketGuild guild)
+		public static GuildData.ModificationResult ClearFilteredWords(this SocketGuild guild)
 		{
-			return Util.Servers.ClearFilteredWords(guild.Id);
+			return Util.Guilds.ClearFilteredWords(guild.Id);
 		}
 
 		public static bool IncrementRpsWins(this SocketGuildUser user)
@@ -314,13 +314,13 @@ namespace Appalachia.Utility.Extensions
 				// TODO: increment on the global leaderboard once i have that going -jolk 2022-02-15
 			}
 
-			return Util.Servers.IncrementRpsWins(user.Guild.Id, user.Id);
+			return Util.Guilds.IncrementRpsWins(user.Guild.Id, user.Id);
 		}
 		public static bool IncrementRpsLosses(this SocketGuildUser user)
 		{// see comments on IncrementRpsWins
 			if (user.Guild.Id != 390334803972587530) { }
 
-			return Util.Servers.IncrementRpsLosses(user.Guild.Id, user.Id);
+			return Util.Guilds.IncrementRpsLosses(user.Guild.Id, user.Id);
 		}
 
 

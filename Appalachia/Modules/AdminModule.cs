@@ -201,14 +201,14 @@ namespace Appalachia.Modules
 					.WithThumbnailUrl(Context.Guild.IconUrl);
 				switch (Context.Guild.SetColor(newColor))
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")
 							.WithDescription($"Server color for {Context.Guild.Name}\nis now **{newColor.ToColorString()}**");
 
 						Program.Logger.Verbose(Source, $"Color of {Context.Guild.GetNameWithId()} changed to {newColor.ToColorString(false)}!");
 						break;
 
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							.WithDescription($"Server color for {Context.Guild.Name}\nis already **{newColor.ToColorString()}**");
 
@@ -244,14 +244,14 @@ namespace Appalachia.Modules
 
 				switch (Context.Guild.SetAnnouncementChannel(channel))
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Announcement channel for {Context.Guild.Name}\nis now {channel.Mention}");
 
 						Program.Logger.Verbose(Source, $"Announcement channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!");
 						break;
 
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{channel.Mention} is already the announcement channel\nin {Context.Guild.Name}");
 
@@ -286,14 +286,14 @@ namespace Appalachia.Modules
 
 				switch (Context.Guild.SetQuoteChannel(channel))
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Quotes channel for {Context.Guild.Name}\nis now {channel.Mention}");
 
 						Program.Logger.Verbose(Source, $"Quote channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!");
 						break;
 
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{channel.Mention} is already the quotes channel\nin {Context.Guild.Name}");
 
@@ -321,14 +321,14 @@ namespace Appalachia.Modules
 
 				switch (Context.Guild.SetDefaultRole(role))
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Default role for {Context.Guild.Name}\nis now {role.Mention}");
 
 						Program.Logger.Verbose(Source, $"Default role of {Context.Guild.GetNameWithId()} changed to {role.GetNameWithId()}!");
 						break;
 
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{role.Mention} is already the default role\nin {Context.Guild.Name}");
 
@@ -361,17 +361,17 @@ namespace Appalachia.Modules
 			[Command("add"), Name(Source)]
 			public async Task AddWords(params string[] words)
 			{
-				ServerData.ModificationResult result = Context.Guild.AddFilteredWords(words);
+				GuildData.ModificationResult result = Context.Guild.AddFilteredWords(words);
 
 				EmbedBuilder embed;
 				switch (result)
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed = new EmbedBuilder().WithTitle("Wordlist updated!")
 												  .WithDescription("All words have been addeded to the server\'s filters:\n" + string.Join('\n', words.Select(str => $"{str.ToUpper()[0]}||{str[1..]}||")))
 												  .WithColor(Context.Guild.GetColor());
 						break;
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed = new EmbedBuilder().WithTitle("Nothing was changed!")
 												  .WithDescription("All provided words are already filtered in this server!")
 												  .WithColor(Context.Guild.GetColor());
@@ -387,7 +387,7 @@ namespace Appalachia.Modules
 			[Command("remove"), Alias("delete", "del"), Name(Source)]
 			public async Task RemoveWords(params string[] words)
 			{
-				ServerData.ModificationResult result = Context.Guild.RemoveFilteredWords(words);
+				GuildData.ModificationResult result = Context.Guild.RemoveFilteredWords(words);
 				if (words[0] == "-A")
 				{
 					await ClearWords();
@@ -397,12 +397,12 @@ namespace Appalachia.Modules
 				EmbedBuilder embed;
 				switch (result)
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed = new EmbedBuilder().WithTitle("Wordlist updated!")
 													.WithDescription($"All words have been removed from the server\'s filters\n```{string.Join(", ", words.Select(str => $"\"{str}\""))}```")
 												  .WithColor(Context.Guild.GetColor());
 						break;
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed = new EmbedBuilder().WithTitle("Nothing was changed!")
 												  .WithDescription("All provided words are already allowed in this server!")
 												  .WithColor(Context.Guild.GetColor());
@@ -417,17 +417,17 @@ namespace Appalachia.Modules
 			}
 			private async Task ClearWords()
 			{
-				ServerData.ModificationResult result = Context.Guild.ClearFilteredWords();
+				GuildData.ModificationResult result = Context.Guild.ClearFilteredWords();
 
 				EmbedBuilder embed;
 				switch (result)
 				{
-					case ServerData.ModificationResult.Success:
+					case GuildData.ModificationResult.Success:
 						embed = new EmbedBuilder().WithTitle("Wordlist updated!")
 										  .WithDescription("Server word filter has been cleared!")
 										  .WithColor(Context.Guild.GetColor());
 						break;
-					case ServerData.ModificationResult.Unchanged:
+					case GuildData.ModificationResult.Unchanged:
 						embed = new EmbedBuilder().WithTitle("Nothing was changed!")
 												  .WithDescription("The server word filter was already empty!")
 												  .WithColor(Context.Guild.GetColor());

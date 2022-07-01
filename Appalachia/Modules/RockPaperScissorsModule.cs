@@ -79,7 +79,7 @@ namespace Appalachia.Modules
 		{
 			if (userFilter == null)
 			{// i actually really dont like this code, but it works so im leaving it at least for now -jolk 2022-03-22
-				KeyValuePair<ulong, Server.UserScore>[] leaderboard = Context.Guild.GetRpsLeaderboard();
+				KeyValuePair<ulong, Guild.UserScore>[] leaderboard = Context.Guild.GetRpsLeaderboard();
 
 				(int rank, string user, string elo, string wins, string losses, string winRate)[] userDataStrings = new (int, string, string, string, string, string)[leaderboard.Length];
 				// this is kinda gross but i think it might be the easiest way? -jolk 2022-03-15
@@ -87,7 +87,7 @@ namespace Appalachia.Modules
 				int rank = 1, nameSpacing = 4, eloSpacing = 3, winsSpacing = 1, lossesSpacing = 1, winRateSpacing = 5;
 				for (int i = 0; i < leaderboard.Length; i++)
 				{
-					KeyValuePair<ulong, Server.UserScore> pair = leaderboard[i];
+					KeyValuePair<ulong, Guild.UserScore> pair = leaderboard[i];
 					if (i > 0 && pair.Value.Elo != leaderboard[i - 1].Value.Elo)
 						rank = i + 1;
 
@@ -140,7 +140,7 @@ namespace Appalachia.Modules
 			}
 			else
 			{
-				Server.UserScore userScore = userFilter.GetGuildRpsScore();
+				Guild.UserScore userScore = userFilter.GetGuildRpsScore();
 				EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Stats")
 										   .WithDescription($"Stats for {userFilter.Mention}\n")
 										   .WithFields(new EmbedFieldBuilder[]
