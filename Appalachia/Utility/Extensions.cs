@@ -248,6 +248,20 @@ namespace Appalachia.Utility.Extensions
 		{
 			return Util.Servers.GetFilteredWords(guild.Id);
 		}
+		public static (ulong announcements, ulong quotes) GetImportantChannelIds(this SocketGuild guild)
+		{
+			SocketTextChannel announcementChannel = null, quoteChannel = null;
+			foreach (SocketTextChannel textChannel in guild.TextChannels)
+			{
+				if (announcementChannel == null && (textChannel.GetChannelType() == ChannelType.News || textChannel.Name.Contains("announcements")))
+					announcementChannel = textChannel;
+
+				if (quoteChannel == null && textChannel.Name.Contains("quote"))
+					quoteChannel = textChannel;
+			}
+
+			return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
+		}
 
 		public static KeyValuePair<ulong, Server.UserScore>[] GetRpsLeaderboard(this SocketGuild guild)
 		{

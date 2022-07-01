@@ -392,10 +392,9 @@ namespace Appalachia
 				Task _ = guild.DownloadUsersAsync();
 				if (!Util.Servers.Exists(guild.Id))
 				{
-					(ulong announcementChannelId, ulong quoteChannelId) = GetImportantChannelIds(guild);
+					(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
 					Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
 				}
-
 			}
 
 			int serversRemoved = Util.Servers.RemoveMissingIds(activeServers.ToArray());
@@ -408,23 +407,9 @@ namespace Appalachia
 		{
 			Logger.Info("ServerJoin", $"Joined {guild.Name} ({guild.Id})");
 			Task _ = guild.DownloadUsersAsync();
-			(ulong announcementChannelId, ulong quoteChannelId) = GetImportantChannelIds(guild);
+			(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
 			Util.Servers.AddServer(guild.Id, announcementChannelId, quoteChannelId);
 			return Task.CompletedTask;
-		}
-		private (ulong announcements, ulong quotes) GetImportantChannelIds(SocketGuild guild)
-		{
-			SocketTextChannel announcementChannel = null, quoteChannel = null;
-			foreach (SocketTextChannel textChannel in guild.TextChannels)
-			{
-				if (announcementChannel == null && (textChannel.GetChannelType() == ChannelType.News || textChannel.Name.Contains("announcements")))
-					announcementChannel = textChannel;
-
-				if (quoteChannel == null && textChannel.Name.Contains("quote"))
-					quoteChannel = textChannel;
-			}
-
-			return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
 		}
 		private Task OnGuildLeaveAsync(SocketGuild guild)
 		{
