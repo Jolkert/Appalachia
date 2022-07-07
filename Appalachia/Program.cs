@@ -83,6 +83,30 @@ namespace Appalachia
 			await Task.Delay(-1);
 		}
 
+		private async Task OnReadyAsync()
+		{
+			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
+
+			List<ulong> activeGuilds = new List<ulong>();
+			foreach (SocketGuild guild in Client.Guilds)
+			{
+				activeGuilds.Add(guild.Id);
+				Logger.Info("Startup", $"Connected to {guild.Name} ({guild.Id})");
+				Task _ = guild.DownloadUsersAsync();
+				if (!Util.Guilds.Exists(guild.Id))
+				{
+					(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
+					Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
+				}
+			}
+
+			int guildsRemoved = Util.Guilds.RemoveMissingIds(activeGuilds.ToArray());
+			if (guildsRemoved > 0)
+				Logger.Info("Startup", $"Removed {guildsRemoved} extraneous guild{(guildsRemoved != 1 ? "s" : "")} from database");
+
+			Logger.Info("Startup", $"Bot is active in {Client.Guilds.Count} guild{(Client.Guilds.Count != 1 ? "s" : "")}!");
+		}
+
 		private async Task OnReactAsync(Cacheable<IUserMessage, ulong> messageArg, Cacheable<IMessageChannel, ulong> channelArg, SocketReaction reaction)
 		{
 			if (reaction.User.Value.IsBot)
@@ -112,6 +136,50 @@ namespace Appalachia
 					_ = HandleRpsSelectionAsync(game, status, await channelTask, reaction);
 			}
 		}
+
+		private Task OnGuildJoinAsync(SocketGuild guild)
+		{
+			Logger.Info("GuildJoin", $"Joined {guild.Name} ({guild.Id})");
+			Task _ = guild.DownloadUsersAsync();
+			(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
+			Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
+			return Task.CompletedTask;
+		}
+		private Task OnGuildLeaveAsync(SocketGuild guild)
+		{
+			Util.Guilds.RemoveGuild(guild.Id);
+			Logger.Info(Source, $"Removed data for {guild.GetNameWithId()}");
+			return Task.CompletedTask;
+		}
+
+		private async Task FilterWordsAsync(SocketMessage message)
+		{
+			if (message.Source == MessageSource.User && message.Channel is not SocketDMChannel && message.HasFilteredWord())
+			{
+				try
+				{
+					await message.DeleteAsync();
+					Logger.Info(Source, $"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
+				}
+				catch (Discord.Net.HttpException)
+				{
+					Logger.Error(Source, $"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
+				}
+
+			}
+		}
+
+		private async Task AddDefaultRole(SocketGuildUser user)
+		{
+			SocketRole role = user.Guild.GetDefaultRole();
+			if (role == null)
+				return;
+
+			await user.AddRoleAsync(role);
+			Logger.Info(Source, $"Added default role {role.GetNameWithId()} to user new user {user.GetFullUsername()} in {user.Guild.GetNameWithId()}");
+		}
+
+
 		private static async Task HandleRpsConfirmationAsync(RpsChallenge challenge, ReactionStatus status, IMessageChannel rawChannel, SocketReaction reaction)
 		{
 			if (rawChannel is not SocketTextChannel channel) // in practice this should never happen? but like. just in case -jolk 2022-01-10
@@ -256,6 +324,8 @@ namespace Appalachia
 			}
 		}
 
+		// this is a complete mess but it works so its okay -jolk 2022-07-07
+		// TODO: fix this lmao
 		private static void SendPvpSelectionMessages(SocketGuildUser challenger, SocketGuildUser opponent, RpsChallenge challenge)
 		{// ive just made this method that supposed to be async just kinda like. not lol -jolk 2022-01-13
 			if (challenge is not RpsGame gameData)
@@ -353,77 +423,13 @@ namespace Appalachia
 			return $"{user.Mention} chose {selection} ({selection.ToEmote()})";
 		}
 
-		private async Task FilterWordsAsync(SocketMessage message)
-		{
-			if (message.Source == MessageSource.User && message.Channel is not SocketDMChannel && message.HasFilteredWord())
-			{
-				try
-				{
-					await message.DeleteAsync();
-					Logger.Info(Source, $"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
-				}
-				catch (Discord.Net.HttpException)
-				{
-					Logger.Error(Source, $"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
-				}
 
-			}
-		}
-
-		private async Task AddDefaultRole(SocketGuildUser user)
-		{
-			SocketRole role = user.Guild.GetDefaultRole();
-			if (role == null)
-				return;
-
-			await user.AddRoleAsync(role);
-			Logger.Info(Source, $"Added default role {role.GetNameWithId()} to user new user {user.GetFullUsername()} in {user.Guild.GetNameWithId()}");
-		}
-
-		private async Task OnReadyAsync()
-		{
-			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
-
-			List<ulong> activeGuilds = new List<ulong>();
-			foreach (SocketGuild guild in Client.Guilds)
-			{
-				activeGuilds.Add(guild.Id);
-				Logger.Info("Startup", $"Connected to {guild.Name} ({guild.Id})");
-				Task _ = guild.DownloadUsersAsync();
-				if (!Util.Guilds.Exists(guild.Id))
-				{
-					(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
-					Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
-				}
-			}
-
-			int guildsRemoved = Util.Guilds.RemoveMissingIds(activeGuilds.ToArray());
-			if (guildsRemoved > 0)
-				Logger.Info("Startup", $"Removed {guildsRemoved} extraneous guild{(guildsRemoved != 1 ? "s" : "")} from database");
-
-			Logger.Info("Startup", $"Bot is active in {Client.Guilds.Count} guild{(Client.Guilds.Count != 1 ? "s" : "")}!");
-		}
-		private Task OnGuildJoinAsync(SocketGuild guild)
-		{
-			Logger.Info("GuildJoin", $"Joined {guild.Name} ({guild.Id})");
-			Task _ = guild.DownloadUsersAsync();
-			(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
-			Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
-			return Task.CompletedTask;
-		}
-		private Task OnGuildLeaveAsync(SocketGuild guild)
-		{
-			Util.Guilds.RemoveGuild(guild.Id);
-			Logger.Info(Source, $"Removed data for {guild.GetNameWithId()}");
-			return Task.CompletedTask;
-		}
 
 		private Task LogAsync(LogMessage message)
 		{
 			Logger.Log(message);
 			return Task.CompletedTask;
 		}
-
 
 		public static void Stop()
 		{
