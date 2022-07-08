@@ -1,7 +1,10 @@
 ﻿using Appalachia.Data;
 using Discord;
 using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using static Appalachia.Utility.Util;
 
 namespace Appalachia.Extensions
@@ -98,7 +101,7 @@ namespace Appalachia.Extensions
 
 		public static bool HasFilteredWord(this IMessage message)
 		{
-			string[] globalFilteredWords = Util.FilteredWords.GetFilteredWords();
+			string[] globalFilteredWords = Filter.GetFilteredWords();
 			string[] guildFilteredWords = Array.Empty<string>();
 			if (message.Channel is SocketGuildChannel channel)
 				guildFilteredWords = channel.Guild.GetFilteredWords();

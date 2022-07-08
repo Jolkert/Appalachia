@@ -1,4 +1,5 @@
-﻿using Appalachia.Utility;
+﻿using Appalachia.Extensions;
+using Appalachia.Utility;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
