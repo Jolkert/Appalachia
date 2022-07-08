@@ -1,6 +1,6 @@
-﻿using Appalachia.Services;
+﻿using Appalachia.Extensions;
+using Appalachia.Services;
 using Appalachia.Utility;
-using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
 using System.Collections.Generic;

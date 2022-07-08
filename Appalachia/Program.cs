@@ -1,7 +1,7 @@
 ﻿using Appalachia.Data;
+using Appalachia.Extensions;
 using Appalachia.Services;
 using Appalachia.Utility;
-using Appalachia.Utility.Extensions;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
