@@ -16,8 +16,6 @@ namespace Appalachia
 {
 	class Program
 	{
-		private const string Source = "Main";
-
 		public static DiscordSocketClient Client;
 		public static readonly string Version = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
@@ -33,7 +31,7 @@ namespace Appalachia
 			}
 			catch (Exception exception)
 			{// if theres an exception we want to log it to the file and just rethrow it -jolk 2022-05-01
-				Logger.Critical(Source, "Something real bad just happened!", exception);
+				Logger.Critical("Something real bad just happened!", exception);
 				throw;
 			}
 			finally
@@ -49,20 +47,20 @@ namespace Appalachia
 
 			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
 			{
-				Logger.Error("Startup", "Bot token not found. Make sure you have your bot token set in Resources/config.json or enter token now");
+				Logger.Error("Bot token not found. Make sure you have your bot token set in Resources/config.json or enter token now");
 				Console.Write("Enter bot token: ");
 				Config.SetToken(Console.ReadLine());
 			}
 			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
 			{
-				Logger.Error("Startup", "Command prefix not found. Make sure you have your command prefix set in Resources/config.json or enter prefix now");
+				Logger.Error("Command prefix not found. Make sure you have your command prefix set in Resources/config.json or enter prefix now");
 				Console.Write("Enter bot prefix: ");
 				Config.SetPrefix(Console.ReadLine());
 			}
 			if (!Config.Settings.OutputLogsToFile)
-				Logger.Info("Startup", "OutputLogsToFile false in config. Logs of bot activity will not be saved!");
+				Logger.Info("OutputLogsToFile false in config. Logs of bot activity will not be saved!");
 
-			Logger.Info("Startup", $"Starting Appalachia v{Version}");
+			Logger.Info($"Starting Appalachia v{Version}");
 
 			using ServiceProvider services = ConfigureServices();
 			Client = services.GetRequiredService<DiscordSocketClient>();
@@ -91,7 +89,7 @@ namespace Appalachia
 			foreach (SocketGuild guild in Client.Guilds)
 			{
 				activeGuilds.Add(guild.Id);
-				Logger.Info("Startup", $"Connected to {guild.Name} ({guild.Id})");
+				Logger.Info($"Connected to {guild.Name} ({guild.Id})");
 				Task _ = guild.DownloadUsersAsync();
 				if (!Util.Guilds.Exists(guild.Id))
 				{
@@ -102,9 +100,9 @@ namespace Appalachia
 
 			int guildsRemoved = Util.Guilds.RemoveMissingIds(activeGuilds.ToArray());
 			if (guildsRemoved > 0)
-				Logger.Info("Startup", $"Removed {guildsRemoved} extraneous guild{(guildsRemoved != 1 ? "s" : "")} from database");
+				Logger.Info($"Removed {guildsRemoved} extraneous guild{(guildsRemoved != 1 ? "s" : "")} from database");
 
-			Logger.Info("Startup", $"Bot is active in {Client.Guilds.Count} guild{(Client.Guilds.Count != 1 ? "s" : "")}!");
+			Logger.Info($"Bot is active in {Client.Guilds.Count} guild{(Client.Guilds.Count != 1 ? "s" : "")}!");
 		}
 
 		private async Task OnReactAsync(Cacheable<IUserMessage, ulong> messageArg, Cacheable<IMessageChannel, ulong> channelArg, SocketReaction reaction)
@@ -139,7 +137,7 @@ namespace Appalachia
 
 		private Task OnGuildJoinAsync(SocketGuild guild)
 		{
-			Logger.Info("GuildJoin", $"Joined {guild.Name} ({guild.Id})");
+			Logger.Info($"Joined {guild.Name} ({guild.Id})");
 			Task _ = guild.DownloadUsersAsync();
 			(ulong announcementChannelId, ulong quoteChannelId) = guild.CheckForImportantChannels();
 			Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
@@ -148,7 +146,7 @@ namespace Appalachia
 		private Task OnGuildLeaveAsync(SocketGuild guild)
 		{
 			Util.Guilds.RemoveGuild(guild.Id);
-			Logger.Info(Source, $"Removed data for {guild.GetNameWithId()}");
+			Logger.Info($"Removed data for {guild.GetNameWithId()}");
 			return Task.CompletedTask;
 		}
 
@@ -159,11 +157,11 @@ namespace Appalachia
 				try
 				{
 					await message.DeleteAsync();
-					Logger.Info(Source, $"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
+					Logger.Info($"Removed message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
 				}
 				catch (Discord.Net.HttpException)
 				{
-					Logger.Error(Source, $"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
+					Logger.Error($"Attempted but unable to remove message \"{message.Content}\" from {message.Author.GetFullUsername()} in {message.Channel.GetGuildChannelName()}");
 				}
 
 			}
@@ -176,7 +174,7 @@ namespace Appalachia
 				return;
 
 			await user.AddRoleAsync(role);
-			Logger.Info(Source, $"Added default role {role.GetNameWithId()} to user new user {user.GetFullUsername()} in {user.Guild.GetNameWithId()}");
+			Logger.Info($"Added default role {role.GetNameWithId()} to user new user {user.GetFullUsername()} in {user.Guild.GetNameWithId()}");
 		}
 
 
@@ -185,7 +183,7 @@ namespace Appalachia
 			if (rawChannel is not SocketTextChannel channel) // in practice this should never happen? but like. just in case -jolk 2022-01-10
 				return;
 
-			Logger.Verbose(Source, $"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]");
+			Logger.Verbose($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{channel.GetGuildChannelName()}/{reaction.MessageId}]");
 
 			SocketGuildUser challenger = channel.Guild.GetUser(challenge.PlayerIds.Challenger);
 			SocketGuildUser opponent = channel.Guild.GetUser(challenge.PlayerIds.Opponent);
@@ -207,7 +205,7 @@ namespace Appalachia
 
 				default:
 					await rawChannel.SendErrorMessageAsync("This isn\'t supposed to happen.\nIf you see this something has gone terribly wrong.");
-					Logger.Error(Source, "If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation");
+					Logger.Error("If you\'re seeing this, something is terribly wrong with HandleRpsConfirmation");
 					return;
 			}
 
@@ -223,7 +221,7 @@ namespace Appalachia
 			// im wondering if i should like. take a break to clear my brain. ive been staring at vs for too long. im starting to feel the brainpower leaving my soul
 			// and like. i really *shouldnt* write this method in particular in this state. yea im gonna take a break -jolk 2022-01-09 (01:49)
 
-			Logger.Verbose(Source, $"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]");
+			Logger.Verbose($"[{reaction.User.Value.GetFullUsername()}] reacted [{status}] in [{downloadedChannel.GetGuildChannelName()}/{reaction.MessageId}] [#{gameData.MatchId:x6}]");
 
 			bool isBotMatch = gameData.PlayerIds.Contains(Client.CurrentUser.Id);
 			bool userIsChallenger = reaction.UserId == gameData.PlayerIds.Challenger;
@@ -236,14 +234,14 @@ namespace Appalachia
 				RpsSelection userSelection = status.GetUserSelection();
 
 				gameData.SetChallengerSelection(userSelection);
-				Logger.Verbose(Source, $"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})");
+				Logger.Verbose($"Challenger selection: [{userSelection}] (#{gameData.MatchId:x6})");
 			}
 			else
 			{
 				RpsSelection userSelection = status.GetUserSelection();
 
 				gameData.SetOpponentSelection(userSelection);
-				Logger.Verbose(Source, $"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})");
+				Logger.Verbose($"Opponent selection: [{userSelection}] (#{gameData.MatchId:x6})");
 			}
 
 			// i cant. see above comment. i need to rest my brain. ill do the rest later -jolk 2022-01-09
@@ -316,7 +314,7 @@ namespace Appalachia
 							SendPvpSelectionMessages(challenger, opponent, gameData);
 						else
 						{
-							Logger.Verbose(Source, $"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]");
+							Logger.Verbose($"Appalachia selects [{gameData.Selections.Opponent}] in match [#{gameData.MatchId:x6}] against [{challenger.GetFullUsername()}]");
 							Task _ = (await SendBotSelectionMessage(channel, challenger, gameData)).AddRpsReactionsAsync();
 						}
 						break;

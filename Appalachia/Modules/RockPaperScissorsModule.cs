@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group("rps"), RequireContext(ContextType.Guild), Name(Source)]
+	[Group("rps"), RequireContext(ContextType.Guild), Name(Name)]
 	public class RockPaperScissorsModule : ModuleWithHelp
 	{
-		public const string Source = "Rock Paper Scissors";
+		public const string Name = "Rock Paper Scissors";
 
-		public override string ModuleName => Source;
+		public override string ModuleName => Name;
 		public override string Description => "Challenge a user to a Rock Paper Scissors match";
 		public override string Usage => "<@user> [first_to]";
 
@@ -27,7 +27,7 @@ namespace Appalachia.Modules
 		// might want to redo all of this with buttons instead of reactions? would certainly make life a decent bit easier. idk we'll see. just wanna get 2.0 out first -jolk 2022-04-28
 		// i actually dont think i like buttons very much? idk it might make stuff easier, but im not a big fan -jolk 2022-05-11
 
-		[Command, Name(Source)]
+		[Command, Name(Name)]
 		public async Task RockPaperScissorsCommand(SocketGuildUser opponent = null, uint firstToScore = 1)
 		{
 			if (opponent == null)
@@ -48,7 +48,7 @@ namespace Appalachia.Modules
 
 					RpsSelection botSelection = (RpsSelection)(1 << Util.Rand.Next(3));
 					RpsGame gameData = new RpsGame(Context.Guild.Id, Context.Channel.Id, Context.User.Id, opponent.Id, firstToScore, botSelection);
-					Program.Logger.Verbose(Source, $"Appalachia selects [{botSelection}] in match [#{gameData.MatchId:x6}] against [{Context.User.GetFullUsername()}]");
+					Program.Logger.Verbose($"Appalachia selects [{botSelection}] in match [#{gameData.MatchId:x6}] against [{Context.User.GetFullUsername()}]");
 
 					gameData.AddToDatabase();
 					IMessage message = await Program.SendBotSelectionMessage(Context.Channel, Context.User, gameData);
@@ -74,7 +74,7 @@ namespace Appalachia.Modules
 				await message.AddReactionAsync(Reactions.RpsDeny);
 			}
 		}
-		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + " lb")]
+		[Command("leaderboard"), Alias("lb", "scores"), Name(Name + " lb")]
 		public async Task RockPaperScissorsLeaderboard(SocketGuildUser userFilter = null)
 		{
 			if (userFilter == null)
@@ -157,7 +157,7 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Command("leaderboard"), Alias("lb", "scores"), Name(Source + "/lb")]
+		[Command("leaderboard"), Alias("lb", "scores"), Name(Name + "/lb")]
 		public async Task RockPaperScissorsLeaderboard([Remainder] string userArg)
 		{
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))

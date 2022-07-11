@@ -10,37 +10,37 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group("admin"), Alias("adm", "ad"), Name(Source), RequireContext(ContextType.Guild), RequireUserPermission(ChannelPermission.ManageChannels)]
+	[Group("admin"), Alias("adm", "ad"), Name(Name), RequireContext(ContextType.Guild), RequireUserPermission(ChannelPermission.ManageChannels)]
 	public class AdminModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
-		private const string Source = "Admin"; // we probably dont need this for anything tbh? -jolk 2022-05-03
+		private const string Name = "Admin"; // we probably dont need this for anything tbh? -jolk 2022-05-03
 
-		[Group("announce"), Alias("ann"), Name(Source)]
+		[Group("announce"), Alias("ann"), Name(Name)]
 		public class AnnounceModule : ModuleWithHelp
 		{
-			private const string Source = "Announce";
+			private const string Name = "Announce";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Sends the message argument into the announcements channel if one is specified";
 			public override string Usage => "<message>";
 
-			[Command, Name(Source)]
+			[Command, Name(Name)]
 			public async Task Announce([Remainder] string message)
 			{
 				await Context.Guild.GetAnnouncementChannel().SendMessageAsync(message);
 			}
 		}
 
-		[Group("get"), Alias("access", "retrieve", "check"), Name(Source)]
+		[Group("get"), Alias("access", "retrieve", "check"), Name(Name)]
 		public class AccessModule : ModuleWithHelp
 		{
-			private const string Source = "Get";
+			private const string Name = "Get";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Retrieves bot-related server properties (announcement/quotes channel and server color)\n*See wiki page for details*";
 			public override string Usage => "<property>";
 
-			[Command("color"), Alias("colour", "col"), Name(Source)]
+			[Command("color"), Alias("colour", "col"), Name(Name)]
 			public async Task AccessColorCommand()
 			{
 				string color = new Color(Context.Guild.GetColor()).ToColorString();
@@ -53,7 +53,7 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("announcements"), Alias("announce", "ann"), Name(Source)]
+			[Command("announcements"), Alias("announce", "ann"), Name(Name)]
 			public async Task AccessAnnouncementChannel()
 			{
 				SocketTextChannel channel = Context.Guild.GetAnnouncementChannel();
@@ -70,7 +70,7 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("quotes"), Alias("quote", "qt"), Name(Source)]
+			[Command("quotes"), Alias("quote", "qt"), Name(Name)]
 			public async Task AccessQuoteChannel()
 			{
 				SocketTextChannel channel = Context.Guild.GetQuoteChannel();
@@ -87,7 +87,7 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("defaultrole"), Alias("defrole"), Name(Source)]
+			[Command("defaultrole"), Alias("defrole"), Name(Name)]
 			public async Task AccessDefaultRole()
 			{
 				SocketRole role = Context.Guild.GetDefaultRole();
@@ -105,16 +105,16 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Group("set"), Alias("modify", "mod", "edit", "change"), Name(Source)]
+		[Group("set"), Alias("modify", "mod", "edit", "change"), Name(Name)]
 		public class ModifyModule : ModuleWithHelp
 		{
-			private const string Source = "Set";
+			private const string Name = "Set";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Makes changes to bot-related server properties (announcement/quotes channel and server color)\n*See wiki page for details*";
 			public override string Usage => "<property> <new_value>";
 
-			[Command("color"), Alias("colour", "col"), Name(Source)]
+			[Command("color"), Alias("colour", "col"), Name(Name)]
 			public async Task ModifyColorCommand(string input)
 			{
 				// this is a mess. i wanna clean this up, but i have zero motivation and im tired and its almost 3am -jolk 2022-01-06
@@ -127,7 +127,7 @@ namespace Appalachia.Modules
 				if (!match.Success)
 				{
 					await Context.Channel.SendErrorMessageAsync($"Unable convert `{input}` to a color!");
-					Program.Logger.Info(Source, $"No color regex match found for \"{input}\"");
+					Program.Logger.Info($"No color regex match found for \"{input}\"");
 				}
 				else
 				{
@@ -149,7 +149,7 @@ namespace Appalachia.Modules
 						}
 
 
-						value = Convert.ToUInt32(hexString, 16);
+						value = Convert.ToUInt32(16);
 					}
 					else if (match.Groups["rgb"].Value != "")
 					{
@@ -204,14 +204,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							.WithDescription($"Server color for {Context.Guild.Name}\nis now **{newColor.ToColorString()}**");
 
-						Program.Logger.Verbose(Source, $"Color of {Context.Guild.GetNameWithId()} changed to {newColor.ToColorString(false)}!");
+						Program.Logger.Verbose($"Color of {Context.Guild.GetNameWithId()} changed to {newColor.ToColorString(false)}!");
 						break;
 
 					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							.WithDescription($"Server color for {Context.Guild.Name}\nis already **{newColor.ToColorString()}**");
 
-						Program.Logger.Verbose(Source, $"Color of {Context.Guild.GetNameWithId()} was already {newColor.ToColorString(false)}!");
+						Program.Logger.Verbose($"Color of {Context.Guild.GetNameWithId()} was already {newColor.ToColorString(false)}!");
 						break;
 
 					default:
@@ -219,20 +219,20 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						Program.Logger.Error(Source, "This message should never appear. If you see this something\'s up with the announcement channel modify command.");
+						Program.Logger.Error("This message should never appear. If you see this something\'s up with the announcement channel modify command.");
 						return;
 				}
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("announcements"), Alias("announce", "ann"), Name(Source)]
+			[Command("announcements"), Alias("announce", "ann"), Name(Name)]
 			public async Task ModifyAnnouncementChannel(SocketTextChannel channel)
 			{
 				if (channel == null)
 				{
 					await Context.Channel.SendErrorMessageAsync("No channel was specified!");
-					Program.Logger.Verbose(Source, "Announcement channel unchanged. No channel was specified.");
+					Program.Logger.Verbose("Announcement channel unchanged. No channel was specified.");
 					return;
 				}
 
@@ -247,14 +247,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Announcement channel for {Context.Guild.Name}\nis now {channel.Mention}");
 
-						Program.Logger.Verbose(Source, $"Announcement channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!");
+						Program.Logger.Verbose($"Announcement channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!");
 						break;
 
 					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{channel.Mention} is already the announcement channel\nin {Context.Guild.Name}");
 
-						Program.Logger.Verbose(Source, $"Announcement channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!");
+						Program.Logger.Verbose($"Announcement channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!");
 						break;
 
 					default:
@@ -262,20 +262,20 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						Program.Logger.Error(Source, "This message should never appear. If you see this something\'s up with the announcement channel modify command.");
+						Program.Logger.Error("This message should never appear. If you see this something\'s up with the announcement channel modify command.");
 						return;
 				}
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("quotes"), Alias("quote", "qt"), Name(Source)]
+			[Command("quotes"), Alias("quote", "qt"), Name(Name)]
 			public async Task ModifyQuoteChannel(SocketTextChannel channel)
 			{
 				if (channel == null)
 				{
 					await Context.Channel.SendErrorMessageAsync("No channel was specified!");
-					Program.Logger.Verbose(Source, "Quote channel unchanged. No channel was specified.");
+					Program.Logger.Verbose("Quote channel unchanged. No channel was specified.");
 					return;
 				}
 
@@ -289,14 +289,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Quotes channel for {Context.Guild.Name}\nis now {channel.Mention}");
 
-						Program.Logger.Verbose(Source, $"Quote channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!");
+						Program.Logger.Verbose($"Quote channel of {Context.Guild.GetNameWithId()} changed to {channel.GetNameWithId()}!");
 						break;
 
 					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{channel.Mention} is already the quotes channel\nin {Context.Guild.Name}");
 
-						Program.Logger.Verbose(Source, $"Quote channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!");
+						Program.Logger.Verbose($"Quote channel of {Context.Guild.GetNameWithId()} was already {channel.GetNameWithId()}!");
 						break;
 
 					default:
@@ -304,14 +304,14 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						Program.Logger.Error(Source, "This message should never appear. If you see this something\'s up with the quote channel modify command.");
+						Program.Logger.Error("This message should never appear. If you see this something\'s up with the quote channel modify command.");
 						return;
 				}
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("defaultrole"), Alias("defrole"), Name(Source)]
+			[Command("defaultrole"), Alias("defrole"), Name(Name)]
 			public async Task ModifyDefaultRole(SocketRole role)
 			{
 				EmbedBuilder embed = new EmbedBuilder()
@@ -324,14 +324,14 @@ namespace Appalachia.Modules
 						embed.WithTitle("Server information modified!")
 							 .WithDescription($"Default role for {Context.Guild.Name}\nis now {role.Mention}");
 
-						Program.Logger.Verbose(Source, $"Default role of {Context.Guild.GetNameWithId()} changed to {role.GetNameWithId()}!");
+						Program.Logger.Verbose($"Default role of {Context.Guild.GetNameWithId()} changed to {role.GetNameWithId()}!");
 						break;
 
 					case GuildData.ModificationResult.Unchanged:
 						embed.WithTitle("Nothing was changed!")
 							 .WithDescription($"{role.Mention} is already the default role\nin {Context.Guild.Name}");
 
-						Program.Logger.Verbose(Source, $"Default role of {Context.Guild.GetNameWithId()} was already {role.GetNameWithId()}!");
+						Program.Logger.Verbose($"Default role of {Context.Guild.GetNameWithId()} was already {role.GetNameWithId()}!");
 						break;
 
 					default:
@@ -339,7 +339,7 @@ namespace Appalachia.Modules
 							"This really should never happen.\n" +
 							"If you see this message, there\'s a bug somewhere and something has gone wrong");
 
-						Program.Logger.Error(Source, "This message should never appear. If you see this something\'s up with the quote channel modify default role.");
+						Program.Logger.Error("This message should never appear. If you see this something\'s up with the quote channel modify default role.");
 						return;
 				}
 
@@ -348,16 +348,16 @@ namespace Appalachia.Modules
 		}
 
 		// TODO: add a modifier for ShouldMatchSubstitutions -jolk 2022-05-02
-		[Group("filter"), Alias("wordfilter", "bannedwords"), Name(Source)]
+		[Group("filter"), Alias("wordfilter", "bannedwords"), Name(Name)]
 		public class WordFilterModule : ModuleWithHelp
 		{
-			private const string Source = "Filter";
+			private const string Name = "Filter";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Adds or removes words from the server's word filter\n*Enter `-A` (case-sensitive) as the first argument of the `remove` command to clear filter*";
 			public override string Usage => "<add|remove|list> <word_1> [word_2 ...]";
 
-			[Command("add"), Name(Source)]
+			[Command("add"), Name(Name)]
 			public async Task AddWords(params string[] words)
 			{
 				GuildData.ModificationResult result = Context.Guild.AddFilteredWords(words);
@@ -383,7 +383,7 @@ namespace Appalachia.Modules
 
 				await Context.Channel.SendEmbedAsync(embed);
 			}
-			[Command("remove"), Alias("delete", "del"), Name(Source)]
+			[Command("remove"), Alias("delete", "del"), Name(Name)]
 			public async Task RemoveWords(params string[] words)
 			{
 				GuildData.ModificationResult result = Context.Guild.RemoveFilteredWords(words);
@@ -440,7 +440,7 @@ namespace Appalachia.Modules
 				await Context.Channel.SendEmbedAsync(embed);
 			}
 
-			[Command("list"), Alias("ls"), Name(Source)]
+			[Command("list"), Alias("ls"), Name(Name)]
 			public async Task ListWords([Remainder] string _ = "")
 			{
 				EmbedBuilder embed = new EmbedBuilder().WithTitle($"List of filtered words in {Context.Guild.Name}")

@@ -10,17 +10,17 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group, Name(Source)]
+	[Group, Name(Name)]
 	public class RandomModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
-		private const string Source = "RandomModule";
+		private const string Name = "RandomModule";
 
-		[Group("flip"), Alias("coin", "coinflip"), Name(Source)]
+		[Group("flip"), Alias("coin", "coinflip"), Name(Name)]
 		public class FlipModule : ModuleWithHelp
 		{
-			private const string Source = "Flip";
+			private const string Name = "Flip";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Flips a coin";
 			public override string Usage => "";
 
@@ -36,12 +36,12 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Group("randomuser"), Alias("randuser", "user", "someone", "person"), RequireContext(ContextType.Guild), Name(Source)]
+		[Group("randomuser"), Alias("randuser", "user", "someone", "person"), RequireContext(ContextType.Guild), Name(Name)]
 		public class RandomUserModule : ModuleWithHelp
 		{
-			private const string Source = "Random User";
+			private const string Name = "Random User";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Selects a random user. If you are not in a voice channel, or use the `--server` flag while in a voice channel, " +
 												  "any non-bot user in the server may be selected. If you are in a voice channel and do not use the `--server` flag, any non-bot user " +
 												  "in the voice channel may be selected";
@@ -80,12 +80,12 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Group("rng"), Alias("random", "rand", "randnum"), Name(Source)]
+		[Group("rng"), Alias("random", "rand", "randnum"), Name(Name)]
 		public class RngModule : ModuleWithHelp
 		{
-			private const string Source = "Rng";
+			private const string Name = "Rng";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Generate a random number (default range: [1, 100])";
 			public override string Usage => "[min] [max] [count]";
 
@@ -106,19 +106,19 @@ namespace Appalachia.Modules
 			}
 		}
 
-		[Group("roll"), Alias("dice", "die"), Name(Source)]
+		[Group("roll"), Alias("dice", "die"), Name(Name)]
 		public class RollModule : ModuleWithHelp
 		{
-			private const string Source = "Roll";
+			private const string Name = "Roll";
 
-			public override string ModuleName => Source;
+			public override string ModuleName => Name;
 			public override string Description => "Rolls a die or dice using [standard dice notation](https://en.wikipedia.org/wiki/Dice_notation#Standard_notation) (defaults to 1d100)";
 			public override string Usage => "[dice_notation]";
 
 			[Command]
 			public async Task DiceRoll(string diceArgument = "d100")
 			{
-				Program.Logger.Debug(Source, $"Attempting to parse dice from: \"{diceArgument}\"");
+				Program.Logger.Debug($"Attempting to parse dice from: \"{diceArgument}\"");
 
 				// This regex *should* be easy to parse, but I know I'm, stupid sometimes. Just remeber that '\d' is digit, '*' is 0-inf, and '+' is 1-inf. -jolk 2022-01-03
 				// Part of me wonders if it should even be a regex, but like. 100% the easiest way to do it lol -jolk 2022-01-03
@@ -192,7 +192,7 @@ namespace Appalachia.Modules
 				return Colors.MaxRoll;
 			else
 			{
-				Program.Logger.Error(Source, "You should not see this. If you see this, RngModule.RollModule.GetRollColor() is broken. Go fix that.");
+				Program.Logger.Error("You should not see this. If you see this, RngModule.RollModule.GetRollColor() is broken. Go fix that.");
 				return Colors.Default;
 			}
 		}
@@ -203,7 +203,7 @@ namespace Appalachia.Modules
 				rolls[i] = Util.Rand.Next(min, max + 1);
 			int total = rolls.Sum();
 
-			Program.Logger.Verbose(Source, $"Roll: {calls}x[{min}, {max}] Result: {{{string.Join(", ", rolls)}}}={total}");
+			Program.Logger.Verbose($"Roll: {calls}x[{min}, {max}] Result: {{{string.Join(", ", rolls)}}}={total}");
 			return (rolls, total);
 		}
 	}

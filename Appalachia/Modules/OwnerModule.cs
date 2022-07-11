@@ -11,15 +11,15 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group, Name(Source), RequireOwner]
+	[Group, Name(Name), RequireOwner]
 	public class OwnerModule : ModuleBase<SocketCommandContext>, IModuleBase
 	{
-		public const string Source = "Owner";
+		public const string Name = "Owner";
 
-		[Command("reload"), Name(Source + "/Reload")]
+		[Command("reload"), Name("Reload")]
 		public async Task Reload()
 		{
-			Program.Logger.Info(Source, "Reloading json files...");
+			Program.Logger.Info("Reloading json files...");
 
 			foreach (IJsonDataHolder data in Util.DataHolders)
 			{
@@ -33,15 +33,15 @@ namespace Appalachia.Modules
 													.WithColor(Colors.Default));
 		}
 
-		[Command("shutdown"), Alias("stop"), Name(Source + "/Shutdown")]
+		[Command("shutdown"), Alias("stop"), Name("Shutdown")]
 		public Task Shutdown()
 		{
-			Program.Logger.Info(Source, "Shutting down bot...");
+			Program.Logger.Info("Shutting down bot...");
 			Program.Stop();
 			return Task.CompletedTask;
 		}
 
-		[Command("printserver"), Alias("servprint", "sprint", "spr"), Name(Source + "/PrintGuild")]
+		[Command("printserver"), Alias("servprint", "sprint", "spr"), Name("PrintGuild")]
 		public async Task PrintGuild(ulong guildId = 0)
 		{
 			SocketGuild guild;

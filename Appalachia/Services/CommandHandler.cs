@@ -17,8 +17,6 @@ namespace Appalachia.Services
 		private readonly DiscordSocketClient _client;
 		private readonly IServiceProvider _services;
 
-		private const string Source = "CommandHandler";
-
 		public CommandHandler(IServiceProvider services)
 		{
 			_commands = services.GetRequiredService<CommandService>();
@@ -57,7 +55,7 @@ namespace Appalachia.Services
 				stopwatch.Stop();
 
 				if (result.IsSuccess)
-					Program.Logger.Info(Source, $"Command took {stopwatch.ElapsedMilliseconds} ms");
+					Program.Logger.Info($"Command took {stopwatch.ElapsedMilliseconds} ms");
 			});
 
 			return Task.CompletedTask;
@@ -66,11 +64,11 @@ namespace Appalachia.Services
 		private Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
 		{
 			if (!command.IsSpecified)
-				Program.Logger.Info(Source, $"Unknown Command! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{context.Message}]");
+				Program.Logger.Info($"Unknown Command! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{context.Message}]");
 			else if (result.IsSuccess)
-				Program.Logger.Info(Source, $"[{context.User.GetFullUsername()}] ran [{command.Value.Name}] in [{context.GetGuildChannelName()}]");
+				Program.Logger.Info($"[{context.User.GetFullUsername()}] ran [{command.Value.Name}] in [{context.GetGuildChannelName()}]");
 			else
-				Program.Logger.Warn(Source, $"Something has gone terribly wrong! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{result}]");
+				Program.Logger.Warn($"Something has gone terribly wrong! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{result}]");
 
 			return Task.CompletedTask;
 		}

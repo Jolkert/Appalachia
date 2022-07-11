@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -39,12 +40,12 @@ namespace Appalachia.Services
 			});	
 		}
 
-		public void Info(string source, string message) => Log(new LogMessage(LogSeverity.Info, source, message));
-		public void Warn(string source, string message, Exception excpetion = null) => Log(new LogMessage(LogSeverity.Warning, source, message, excpetion));
-		public void Error(string source, string message, Exception exception = null) => Log(new LogMessage(LogSeverity.Error, source, message, exception));
-		public void Critical(string source, string message, Exception exception = null) => Log(new LogMessage(LogSeverity.Critical, source, message, exception));
-		public void Debug(string source, string message) => Log(new LogMessage(LogSeverity.Debug, source, message));
-		public void Verbose(string source, string message) => Log(new LogMessage(LogSeverity.Verbose, source, message));
+		public void Info(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Info, source, message));
+		public void Warn(string message, Exception excpetion = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Warning, source, message, excpetion));
+		public void Error(string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Error, source, message, exception));
+		public void Critical(string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Critical, source, message, exception));
+		public void Debug(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Debug, source, message));
+		public void Verbose(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Verbose, source, message));
 
 		public void Log(LogMessage message)
 		{

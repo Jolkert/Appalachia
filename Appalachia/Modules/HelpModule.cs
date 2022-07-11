@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group("help"), Alias("?"), Name(Source)]
+	[Group("help"), Alias("?"), Name(Name)]
 	public class HelpModule : ModuleBase<SocketCommandContext>
 	{
-		private const string Source = "Help";
+		private const string Name = "Help";
 
 		public const string WikiUrl = "https://github.com/Jolkert/Appalachia/wiki";
 		public const string IssueReportUrl = "https://github.com/Jolkert/Appalachia/issues/new";
@@ -28,7 +28,7 @@ namespace Appalachia.Modules
 												 .WithFooter(new EmbedFooterBuilder().WithText($"Bot author: Jolkert#2991 ・ v{Program.Version}")
 																					 .WithIconUrl(Program.Client.GetUser(CreatorId).GetAvatarUrl()));
 
-		[Command, Name(Source), Priority(1)]
+		[Command, Name(Name), Priority(1)]
 		public async Task HelpCommand()
 		{
 			await Context.Channel.SendEmbedAsync(embed, new ButtonBuilder[]
@@ -39,7 +39,7 @@ namespace Appalachia.Modules
 			});
 		}
 
-		[Command, Name(Source)]
+		[Command, Name(Name)]
 		public async Task HelpCommand([Remainder] string command)
 		{
 			command = command.ToLowerInvariant();

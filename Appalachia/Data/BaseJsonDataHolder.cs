@@ -31,7 +31,7 @@ namespace Appalachia.Data
 		{
 			_data = JsonConvert.DeserializeObject<T>(File.ReadAllText(_fileName), verbose ? _verboseSettings : null);
 			if (Program.Logger != null)
-				Program.Logger.Info(GetType().Name, $"{GetType().Name} reloaded!");
+				Program.Logger.Info($"{GetType().Name} reloaded!");
 		}
 		protected void WriteJson(bool verbose = false)
 		{

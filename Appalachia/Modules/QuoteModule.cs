@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 
 namespace Appalachia.Modules
 {
-	[Group("quote"), Alias("qt"), RequireContext(ContextType.Guild), Name(Source)]
+	[Group("quote"), Alias("qt"), RequireContext(ContextType.Guild), Name(Name)]
 	public class QuoteModule : ModuleWithHelp
 	{
-		private const string Source = "Quote";
+		private const string Name = "Quote";
 
-		public override string ModuleName => Source;
+		public override string ModuleName => Name;
 		public override string Description => "If a channel in the server is designated as the quotes channel, get a random quote";
 		public override string Usage => "[@user*]";
 
-		[Command, Name(Source)]
+		[Command, Name(Name)]
 		public async Task RandomQuote(SocketGuildUser userFilter = null, [Remainder] string _ = "")
 		{
 			EmbedBuilder embed;
@@ -45,7 +45,7 @@ namespace Appalachia.Modules
 
 			await Context.Channel.SendEmbedAsync(embed);
 		}
-		[Command, Name(Source)]
+		[Command, Name(Name)]
 		public async Task RandomQuote([Remainder] string userArg)
 		{
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
@@ -54,7 +54,7 @@ namespace Appalachia.Modules
 				await Context.Channel.SendErrorMessageAsync($"Could not find user \"{userArg}\"");
 		}
 
-		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
+		[Command("leaderboard"), Alias("lb", "%"), Name(Name + "/lb")]
 		public async Task QuoteLeaderboard(SocketGuildUser userFilter = null, [Remainder] string _ = "")
 		{
 			EmbedBuilder embed = new EmbedBuilder().WithColor(Context.Guild.GetColor());
@@ -105,7 +105,7 @@ namespace Appalachia.Modules
 
 			await Context.Channel.SendEmbedAsync(embed);
 		}
-		[Command("leaderboard"), Alias("lb", "%"), Name(Source + "/lb")]
+		[Command("leaderboard"), Alias("lb", "%"), Name(Name + "/lb")]
 		public async Task QuoteLeaderboard([Remainder] string userArg)
 		{
 			if (Context.Guild.TryGetUser(userArg, out SocketGuildUser user))
@@ -125,7 +125,7 @@ namespace Appalachia.Modules
 		}
 		private async Task SendNotSpecifiedErrorAsync()
 		{
-			Program.Logger.Verbose(Source, $"No quote channel in server [{Context.Guild?.GetNameWithId() ?? Context.User.GetFullUsername()}]");
+			Program.Logger.Verbose($"No quote channel in server [{Context.Guild?.GetNameWithId() ?? Context.User.GetFullUsername()}]");
 			await Context.Channel.SendErrorMessageAsync("This server has no defined quotes channel!");
 		}
 	}
