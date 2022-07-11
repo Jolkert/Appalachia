@@ -40,7 +40,7 @@ namespace Appalachia.Extensions
 		{
 			return Guilds.GetFilteredWords(guild.Id);
 		}
-		public static (ulong announcements, ulong quotes) GetImportantChannelIds(this SocketGuild guild)
+		public static (ulong announcements, ulong quotes) CheckForImportantChannels(this SocketGuild guild)
 		{
 			SocketTextChannel announcementChannel = null, quoteChannel = null;
 			foreach (SocketTextChannel textChannel in guild.TextChannels)
@@ -97,6 +97,15 @@ namespace Appalachia.Extensions
 		public static GuildData.ModificationResult ClearFilteredWords(this SocketGuild guild)
 		{
 			return Guilds.ClearFilteredWords(guild.Id);
+		}
+
+		public static bool IsAnnouncementChannel(this SocketGuildChannel channel)
+		{
+			return channel.Id == Guilds.GetAnnouncementChannelId(channel.Guild.Id);
+		}
+		public static bool IsQuoteChannel(this SocketGuildChannel channel)
+		{
+			return channel.Id == Guilds.GetQuoteChannelId(channel.Guild.Id);
 		}
 
 		public static bool HasFilteredWord(this IMessage message)

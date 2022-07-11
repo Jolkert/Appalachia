@@ -95,7 +95,7 @@ namespace Appalachia
 				Task _ = guild.DownloadUsersAsync();
 				if (!Util.Guilds.Exists(guild.Id))
 				{
-					(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
+					(ulong announcementChannelId, ulong quoteChannelId) = guild.CheckForImportantChannels();
 					Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
 				}
 			}
@@ -141,7 +141,7 @@ namespace Appalachia
 		{
 			Logger.Info("GuildJoin", $"Joined {guild.Name} ({guild.Id})");
 			Task _ = guild.DownloadUsersAsync();
-			(ulong announcementChannelId, ulong quoteChannelId) = guild.GetImportantChannelIds();
+			(ulong announcementChannelId, ulong quoteChannelId) = guild.CheckForImportantChannels();
 			Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
 			return Task.CompletedTask;
 		}
