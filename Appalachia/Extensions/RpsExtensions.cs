@@ -39,7 +39,7 @@ namespace Appalachia.Extensions
 		}
 		public static uint ParseGameId(this IEmbed embed)
 		{
-			string footer = embed.Footer?.Text;
+			string footer = embed?.Footer?.Text;
 			return footer != null && footer.Contains("Match ID: ") ? Convert.ToUInt32(footer[^6..], 16) : 0;
 		}
 

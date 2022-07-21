@@ -2,12 +2,44 @@
 using Discord;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Appalachia.Extensions
 {
 	public static class ConversionExtensions
 	{
+		private static IReadOnlyDictionary<string, string> NamesAndUnicodesReversed { get; }
+		static ConversionExtensions()
+		{
+			// private access modifier? what for? -jolk 2022-07-21
+			IReadOnlyDictionary<string, string> namesAndUnicodes =(IReadOnlyDictionary<string, string>)
+																	(typeof(Emoji).GetProperty("NamesAndUnicodes", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null));
+
+			Regex isNameRegex = new Regex(@":.+?:");
+			Regex skinToneDescriptorRegex = new Regex(@"light|medium|dark");
+
+			Dictionary<string, string> reversed = new Dictionary<string, string>();
+			foreach (KeyValuePair<string, string> entry in namesAndUnicodes)
+			{
+				// use :thumbsup: and :thumbsdown: instead of :+1: and :-1:
+				if (entry.Key.Contains(":+1") || entry.Key.Contains(":-1"))
+					continue;
+
+				// use :[name]_tone#: instead of :[name]_skin-tone-#: or :[name]_[descriptor]-skin-tone:
+				MatchCollection matches = isNameRegex.Matches(entry.Key);
+				if (matches.Count != 1 || skinToneDescriptorRegex.IsMatch(entry.Key))
+					continue;
+
+				if (!reversed.ContainsKey(entry.Value))
+					reversed.Add(entry.Value, entry.Key);
+			}
+
+			NamesAndUnicodesReversed = reversed;
+		}
+
 		public static bool TryGetUser(this IGuild guild, string userArg, out SocketGuildUser user)
 		{
 			foreach (IGuildUser testUser in guild.GetUsersAsync().Result)
@@ -59,6 +91,14 @@ namespace Appalachia.Extensions
 		public static string ToStringAllowNull(this object obj)
 		{
 			return obj != null ? obj.ToString() : string.Empty;
+		}
+
+		public static string ToDiscordName(this IEmote emote)
+		{
+			if (NamesAndUnicodesReversed.ContainsKey(emote.ToString()))
+				return NamesAndUnicodesReversed[emote.ToString()];
+			else
+				return emote.ToString();
 		}
 	}
 }

@@ -110,7 +110,9 @@ namespace Appalachia
 			if (reaction.User.Value.IsBot)
 				return;
 
-			Task _; // i mean technically i shouldnt be doing this i think? but w/e
+			Logger.Verbose($"{reaction.User.Value?.GetFullUsername()} reacted {reaction.Emote.ToDiscordName()} in {reaction.Channel.GetGuildChannelName()}/{reaction.MessageId}");
+
+			// i mean technically i shouldnt be using the discard i think? but w/e
 			ReactionStatus status = reaction.GetStatus();
 			if ((status & ReactionStatus.RpsConfirmations) != 0)
 			{
