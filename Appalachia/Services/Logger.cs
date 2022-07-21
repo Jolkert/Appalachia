@@ -1,6 +1,8 @@
-﻿using Discord;
+﻿using Appalachia.Extensions;
+using Discord;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -16,6 +18,7 @@ namespace Appalachia.Services
 
 		public bool ShouldFileLog { get; }
 
+		private readonly ConsoleColor _defaultColor;
 		private string _logFile;
 		private FileStream _stream;
 		private string _folderPath = "Resources/logs";
@@ -26,6 +29,8 @@ namespace Appalachia.Services
 
 		public Logger(bool shouldFileLog = false)
 		{
+			Console.ResetColor();
+			_defaultColor = Console.ForegroundColor;
 			ShouldFileLog = shouldFileLog;
 
 			_writeQueue = new Queue<LogMessage>();
@@ -37,18 +42,41 @@ namespace Appalachia.Services
 					LogFromQueue();
 				if (ShouldFileLog)
 					RestartStream();
-			});	
+			});
 		}
 
 		public void Info(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Info, source, message));
 		public void Warn(string message, Exception excpetion = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Warning, source, message, excpetion));
 		public void Error(string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Error, source, message, exception));
 		public void Critical(string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Critical, source, message, exception));
-		public void Debug(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Debug, source, message));
 		public void Verbose(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Verbose, source, message));
+		public void Debug(string message, [CallerMemberName] string source = "")
+		{
+#if DEBUG
+			Log(new LogMessage(LogSeverity.Debug, source, message));
+#endif
+		}
+
+		// object accepters
+		public void Info(object obj, [CallerMemberName] string source = "", [CallerArgumentExpression("obj")] string expression = "") => Info($"{expression}: {obj.ToStringAllowNull()}", source);
+		public void Warn(object obj, Exception exception = null, [CallerMemberName] string source = "") => Warn(obj.ToStringAllowNull(), exception, source);
+		public void Error(object obj, Exception exception = null, [CallerMemberName] string source = "") => Error(obj.ToStringAllowNull(), exception, source);
+		public void Critical(object obj, Exception exception = null, [CallerMemberName] string source = "") => Critical(obj.ToStringAllowNull(), exception, source);
+		public void Verbose(object obj, [CallerMemberName] string source = "") => Verbose(obj.ToStringAllowNull(), source);
+		public void Debug(object obj, [CallerMemberName] string source = "")
+		{
+#if DEBUG
+			Debug(obj.ToStringAllowNull(), source);
+#endif
+		}
+		
 
 		public void Log(LogMessage message)
 		{
+#if !DEBUG
+			if (message.Severity == LogSeverity.Debug)
+				return;
+#endif
 			_writeQueue.Enqueue(message);
 			if (_writeThread == null || _writeThread.ThreadState == ThreadState.Stopped)
 				StartWriteThread();
@@ -58,7 +86,6 @@ namespace Appalachia.Services
 			LogMessage current = _writeQueue.Dequeue();
 			string write = $"{string.Format("{0, -10}", $"[{current.Severity}]")} {current.ToString()}";
 
-			ConsoleColor defaultColor = Console.ForegroundColor;
 			Console.ForegroundColor = current.Severity switch
 			{
 				LogSeverity.Info => ConsoleColor.White,
@@ -67,13 +94,13 @@ namespace Appalachia.Services
 				LogSeverity.Error => ConsoleColor.Red,
 				LogSeverity.Critical => ConsoleColor.DarkRed,
 				LogSeverity.Verbose => ConsoleColor.Green,
-				_ => defaultColor
+				_ => _defaultColor
 			};
 			Console.WriteLine(write);
 			Console.ResetColor();
 
 			if (ShouldFileLog && _stream != null)
-				_stream.Write(Encoding.UTF8.GetBytes($"{write}\n"));	
+				_stream.Write(Encoding.UTF8.GetBytes($"{write}\n"));
 		}
 
 		public void Close()

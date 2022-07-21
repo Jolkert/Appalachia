@@ -56,5 +56,9 @@ namespace Appalachia.Extensions
 		{
 			return String.Concat(Enumerable.Repeat(str, times));
 		}
+		public static string ToStringAllowNull(this object obj)
+		{
+			return obj != null ? obj.ToString() : string.Empty;
+		}
 	}
 }
