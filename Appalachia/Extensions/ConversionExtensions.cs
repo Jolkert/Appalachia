@@ -19,7 +19,7 @@ namespace Appalachia.Extensions
 																	(typeof(Emoji).GetProperty("NamesAndUnicodes", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null));
 
 			Regex isNameRegex = new Regex(@":.+?:");
-			Regex skinToneDescriptorRegex = new Regex(@"light|medium|dark");
+			Regex skinToneDescriptorRegex = new Regex(@"(light|medium|dark)_skin_tone", RegexOptions.ExplicitCapture);
 
 			Dictionary<string, string> reversed = new Dictionary<string, string>();
 			foreach (KeyValuePair<string, string> entry in namesAndUnicodes)
@@ -28,7 +28,7 @@ namespace Appalachia.Extensions
 				if (entry.Key.Contains(":+1") || entry.Key.Contains(":-1"))
 					continue;
 
-				// use :[name]_tone#: instead of :[name]_skin-tone-#: or :[name]_[descriptor]-skin-tone:
+				// use :[name]_tone#: instead of :[name]_skin-tone-#: or :[name]_[descriptor]_skin_tone:
 				MatchCollection matches = isNameRegex.Matches(entry.Key);
 				if (matches.Count != 1 || skinToneDescriptorRegex.IsMatch(entry.Key))
 					continue;
