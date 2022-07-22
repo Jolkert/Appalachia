@@ -15,7 +15,7 @@ namespace Appalachia.Extensions
 		static ConversionExtensions()
 		{
 			// private access modifier? what for? -jolk 2022-07-21
-			IReadOnlyDictionary<string, string> namesAndUnicodes =(IReadOnlyDictionary<string, string>)
+			IReadOnlyDictionary<string, string> namesAndUnicodes = (IReadOnlyDictionary<string, string>)
 																	(typeof(Emoji).GetProperty("NamesAndUnicodes", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null));
 
 			Regex isNameRegex = new Regex(@":.+?:");

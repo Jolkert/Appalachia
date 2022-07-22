@@ -14,20 +14,22 @@ using System.Threading.Tasks;
 
 namespace Appalachia
 {
-	class Program
+	internal static class Program
 	{
-		public static DiscordSocketClient Client;
-		public static readonly string Version = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
+		public static string Version { get; } = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
+		public static DiscordSocketClient Client { get; private set; }
 		public static Logger Logger { get; private set; }
-		private static readonly DailyTrigger MidnightTrigger = new DailyTrigger();
-		public static readonly BotConfig Config = new BotConfig();
+		public static BotConfig Config { get; } = new BotConfig();
 
-		static void Main()
+		private static DailyTrigger MidnightTrigger { get; } = new DailyTrigger();
+
+
+		private static void Main()
 		{
 			try
 			{
-				new Program().StartAsync().GetAwaiter().GetResult();
+				StartAsync().GetAwaiter().GetResult();
 			}
 			catch (Exception exception)
 			{// if theres an exception we want to log it to the file and just rethrow it -jolk 2022-05-01
@@ -41,7 +43,7 @@ namespace Appalachia
 			}
 		}
 
-		public async Task StartAsync()
+		private static async Task StartAsync()
 		{
 			Logger = new Logger(Config.Settings.OutputLogsToFile);
 
@@ -61,6 +63,8 @@ namespace Appalachia
 				Logger.Info("OutputLogsToFile false in config. Logs of bot activity will not be saved!");
 
 			Logger.Info($"Starting Appalachia v{Version}");
+			Logger.Debug("You are currently running a debug build of Appalachia. Bugs and errors may be present!");
+
 
 			using ServiceProvider services = ConfigureServices();
 			Client = services.GetRequiredService<DiscordSocketClient>();
@@ -81,7 +85,7 @@ namespace Appalachia
 			await Task.Delay(-1);
 		}
 
-		private async Task OnReadyAsync()
+		private static async Task OnReadyAsync()
 		{
 			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
 
@@ -105,7 +109,7 @@ namespace Appalachia
 			Logger.Info($"Bot is active in {Client.Guilds.Count} guild{(Client.Guilds.Count != 1 ? "s" : "")}!");
 		}
 
-		private async Task OnReactAsync(Cacheable<IUserMessage, ulong> messageArg, Cacheable<IMessageChannel, ulong> channelArg, SocketReaction reaction)
+		private static async Task OnReactAsync(Cacheable<IUserMessage, ulong> messageArg, Cacheable<IMessageChannel, ulong> channelArg, SocketReaction reaction)
 		{
 			if (reaction.User.Value.IsBot)
 				return;
@@ -137,7 +141,7 @@ namespace Appalachia
 			}
 		}
 
-		private Task OnGuildJoinAsync(SocketGuild guild)
+		private static Task OnGuildJoinAsync(SocketGuild guild)
 		{
 			Logger.Info($"Joined {guild.Name} ({guild.Id})");
 			Task _ = guild.DownloadUsersAsync();
@@ -145,14 +149,14 @@ namespace Appalachia
 			Util.Guilds.AddGuild(guild.Id, announcementChannelId, quoteChannelId);
 			return Task.CompletedTask;
 		}
-		private Task OnGuildLeaveAsync(SocketGuild guild)
+		private static Task OnGuildLeaveAsync(SocketGuild guild)
 		{
 			Util.Guilds.RemoveGuild(guild.Id);
 			Logger.Info($"Removed data for {guild.GetNameWithId()}");
 			return Task.CompletedTask;
 		}
 
-		private async Task FilterWordsAsync(SocketMessage message)
+		private static async Task FilterWordsAsync(SocketMessage message)
 		{
 			if (message.Source == MessageSource.User && message.Channel is not SocketDMChannel && message.HasFilteredWord())
 			{
@@ -169,7 +173,7 @@ namespace Appalachia
 			}
 		}
 
-		private async Task AddDefaultRole(SocketGuildUser user)
+		private static async Task AddDefaultRole(SocketGuildUser user)
 		{
 			SocketRole role = user.Guild.GetDefaultRole();
 			if (role == null)
@@ -425,7 +429,7 @@ namespace Appalachia
 
 
 
-		private Task LogAsync(LogMessage message)
+		private static Task LogAsync(LogMessage message)
 		{
 			Logger.Log(message);
 			return Task.CompletedTask;
