@@ -15,6 +15,10 @@ namespace Appalachia.Services
 		// This thing is probably not very good, but I'm gonna use it anyway because I am stubborn and don't want to use another package -Jolkert 2021-05-06
 		// lol im just copying it from dexbot. above comment still applies -jolk 2022-01-02
 		// it should be a bit better and make a bit more sense now -jolk 2022-06-16
+		// now we're gettings somewhere. this might actually be good now? I doubt it but at least it works much better than before -jolk 2022-07-26
+
+		private static readonly object __streamLock = new object();
+		private static readonly object __writeLock = new object();
 
 		public bool ShouldFileLog { get; }
 
@@ -24,7 +28,6 @@ namespace Appalachia.Services
 		private string _folderPath = "Resources/logs";
 		private readonly Queue<LogMessage> _writeQueue; // We use the queue to prevent collisions
 
-		private readonly ThreadStart _writeThreadStart;
 		private Thread _writeThread;
 
 		public Logger(bool shouldFileLog = false)
@@ -36,21 +39,16 @@ namespace Appalachia.Services
 			_writeQueue = new Queue<LogMessage>();
 			if (shouldFileLog)
 				StartStream();
-			_writeThreadStart = new ThreadStart(() =>
-			{
-				while (_writeQueue.Count > 0)
-					LogFromQueue();
-				if (ShouldFileLog)
-					RestartStream();
-			});
+
+			AppalachiaConsole.CommandInput += (string input) => _stream.Write(Encoding.UTF8.GetBytes($"> {input}\n"));
 		}
 
-		public void Info(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Info, source, message));
-		public void Warn(string message, Exception excpetion = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Warning, source, message, excpetion));
-		public void Error(string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Error, source, message, exception));
-		public void Critical(string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Critical, source, message, exception));
-		public void Verbose(string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Verbose, source, message));
-		public void Debug(string message, [CallerMemberName] string source = "")
+		public void Info([DisallowNull] string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Info, source, message));
+		public void Warn([DisallowNull] string message, Exception excpetion = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Warning, source, message, excpetion));
+		public void Error([DisallowNull] string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Error, source, message, exception));
+		public void Critical([DisallowNull] string message, Exception exception = null, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Critical, source, message, exception));
+		public void Verbose([DisallowNull] string message, [CallerMemberName] string source = "") => Log(new LogMessage(LogSeverity.Verbose, source, message));
+		public void Debug([DisallowNull] string message, [CallerMemberName] string source = "")
 		{
 #if DEBUG
 			Log(new LogMessage(LogSeverity.Debug, source, message));
@@ -81,26 +79,40 @@ namespace Appalachia.Services
 			if (_writeThread == null || _writeThread.ThreadState == ThreadState.Stopped)
 				StartWriteThread();
 		}
-		private void LogFromQueue()
+		private void LogFromQueue(LogMessage message)
 		{
-			LogMessage current = _writeQueue.Dequeue();
-			string write = $"{string.Format("{0, -10}", $"[{current.Severity}]")} {current.ToString()}";
-
-			Console.ForegroundColor = current.Severity switch
+			lock (__writeLock) // if you dont do this things will be the wrong color -jolk 2022-07-26
 			{
-				LogSeverity.Info => ConsoleColor.White,
-				LogSeverity.Debug => ConsoleColor.Magenta,
-				LogSeverity.Warning => ConsoleColor.Yellow,
-				LogSeverity.Error => ConsoleColor.Red,
-				LogSeverity.Critical => ConsoleColor.DarkRed,
-				LogSeverity.Verbose => ConsoleColor.Green,
-				_ => _defaultColor
-			};
-			Console.WriteLine(write);
-			Console.ResetColor();
+				if (message.Message == null) // if you don't do *this* random critical-severity logs with null messages and null sources will be printed. no idea how it happens but its fine -jolk 2022-07-26
+					return;
 
-			if (ShouldFileLog && _stream != null)
-				_stream.Write(Encoding.UTF8.GetBytes($"{write}\n"));
+				string write = $"{string.Format("{0, -10}", $"[{message.Severity}]")} {message}";
+
+				AppalachiaConsole.OutputColor = message.Severity switch
+				{
+					LogSeverity.Info => ConsoleColor.White,
+					LogSeverity.Debug => ConsoleColor.Magenta,
+					LogSeverity.Warning => ConsoleColor.Yellow,
+					LogSeverity.Error => ConsoleColor.Red,
+					LogSeverity.Critical => ConsoleColor.DarkRed,
+					LogSeverity.Verbose => ConsoleColor.Green,
+					_ => _defaultColor
+				};
+				AppalachiaConsole.WriteLine(write);
+
+				lock (__streamLock)
+				{
+					if (ShouldFileLog && _stream != null)
+						_stream.Write(Encoding.UTF8.GetBytes($"{write}\n"));
+				}
+			}
+		}
+		private void WriteAllFromQueue()
+		{
+			while (_writeQueue.Count > 0)
+				LogFromQueue(_writeQueue.Dequeue());
+			if (ShouldFileLog)
+				RestartStream();
 		}
 
 		public void Close()
@@ -139,16 +151,22 @@ namespace Appalachia.Services
 		}
 		private void RestartStream()
 		{
-			_stream.Close();
-			_stream = new FileStream(_logFile, FileMode.Append);
+			lock (__streamLock)
+			{
+				_stream.Close();
+				_stream = new FileStream(_logFile, FileMode.Append);
 
-			if (_writeQueue.Count > 0)
-				StartWriteThread();
+				if (_writeQueue.Count > 0)
+					StartWriteThread();
+			}
 		}
 
 		private void StartWriteThread()
 		{
-			_writeThread = new Thread(_writeThreadStart);
+			_writeThread = new Thread(WriteAllFromQueue)
+			{
+				Name = "Logger"
+			};
 			_writeThread.Start();
 		}
 	}

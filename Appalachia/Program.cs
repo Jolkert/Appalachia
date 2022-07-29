@@ -10,12 +10,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Appalachia
 {
 	internal static class Program
 	{
+		public static string Name { get; } = Assembly.GetAssembly(typeof(Program)).GetName().Name.ToString();
 		public static string Version { get; } = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
 		public static DiscordSocketClient Client { get; private set; }
@@ -27,6 +29,9 @@ namespace Appalachia
 
 		private static void Main()
 		{
+			Console.Title = $"{Name} v{Version}";
+			Logger = new Logger(Config?.Settings.OutputLogsToFile ?? true);
+			
 			try
 			{
 				StartAsync().GetAwaiter().GetResult();
@@ -38,36 +43,26 @@ namespace Appalachia
 			}
 			finally
 			{// this way if theres an error thrown, we still close the logger to make sure everything is good here -jolk 2022-05-01
-				if (Config?.Settings.OutputLogsToFile ?? true)
-					Logger.Close();
+				Logger?.Close();
 			}
 		}
 
 		private static async Task StartAsync()
 		{
-			Logger = new Logger(Config.Settings.OutputLogsToFile);
-
 			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
-			{
-				Logger.Error("Bot token not found. Make sure you have your bot token set in Resources/config.json or enter token now");
-				Console.Write("Enter bot token: ");
-				Config.SetToken(Console.ReadLine());
-			}
+				throw new ConfigException("Bot token not found. Make sure you have your bot token set in Resources/config.json!", nameof(Config.Settings.Token));
 			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
-			{
-				Logger.Error("Command prefix not found. Make sure you have your command prefix set in Resources/config.json or enter prefix now");
-				Console.Write("Enter bot prefix: ");
-				Config.SetPrefix(Console.ReadLine());
-			}
+				throw new ConfigException("Command prefix not found. Make sure you have your command prefix set in Resources/config.json!", nameof(Config.Settings.CommandPrefix));
 			if (!Config.Settings.OutputLogsToFile)
-				Logger.Info("OutputLogsToFile false in config. Logs of bot activity will not be saved!");
+				Logger.Info($"{nameof(Config.Settings.OutputLogsToFile)} false in config. Logs of bot activity will not be saved!");
 
-			Logger.Info($"Starting Appalachia v{Version}");
+			Logger.Info($"Starting {Name} v{Version}");
 			Logger.Debug("You are currently running a debug build of Appalachia. Bugs and errors may be present!");
 
 
 			using ServiceProvider services = ConfigureServices();
 			Client = services.GetRequiredService<DiscordSocketClient>();
+
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
 			Client.JoinedGuild += OnGuildJoinAsync;
@@ -77,16 +72,21 @@ namespace Appalachia
 			Client.UserJoined += AddDefaultRole;
 
 			services.GetRequiredService<CommandService>().Log += LogAsync;
+
+			MidnightTrigger.Trigger += Logger.Restart;
+
+
 			await Client.LoginAsync(TokenType.Bot, Config.Settings.Token);
 			await Client.StartAsync();
 			await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-			MidnightTrigger.Trigger += Logger.Restart;
+			AppalachiaConsole.StartRead();
 			await Task.Delay(-1);
 		}
 
 		private static async Task OnReadyAsync()
 		{
+			Logger.Info($"Bot logged in as <{Client.CurrentUser.GetFullUsername()}> with prefix `{Config.Settings.CommandPrefix}`");
 			await Client.SetGameAsync($"{Config.Settings.CommandPrefix}help", null, ActivityType.Listening);
 
 			List<ulong> activeGuilds = new List<ulong>();
@@ -427,21 +427,16 @@ namespace Appalachia
 			return $"{user.Mention} chose {selection} ({selection.ToEmote()})";
 		}
 
-
-
 		private static Task LogAsync(LogMessage message)
 		{
 			Logger.Log(message);
 			return Task.CompletedTask;
 		}
-
 		public static void Stop()
 		{
 			Logger.Close();
 			Environment.Exit(Environment.ExitCode);
 		}
-
-
 
 		private static ServiceProvider ConfigureServices()
 		{

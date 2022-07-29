@@ -1,4 +1,6 @@
-﻿namespace Appalachia.Data
+﻿using System;
+
+namespace Appalachia.Data
 {
 	public class BotConfig : BaseJsonDataHolder<ConfigOptions>
 	{
@@ -34,6 +36,16 @@
 			this.Token = token;
 			this.CommandPrefix = prefix;
 			this.OutputLogsToFile = outputLogsToFile;
+		}
+	}
+
+	public class ConfigException : Exception
+	{
+		public string MissingFieldName { get; }
+
+		public ConfigException(string message, string missingField) : base(message)
+		{
+			MissingFieldName = missingField;
 		}
 	}
 }
