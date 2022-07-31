@@ -29,7 +29,7 @@ namespace Appalachia
 		private static void Main()
 		{
 			Console.Title = $"{Name} v{Version}";
-			Logger = new Logger(Config?.Settings.OutputLogsToFile ?? true);
+			Logger = new Logger("Resources/logs", Config?.Settings.OutputLogsToFile ?? true);
 			
 			try
 			{

@@ -25,13 +25,15 @@ namespace Appalachia.Services
 		private readonly ConsoleColor _defaultColor;
 		private string _logFile;
 		private FileStream _stream;
-		private string _folderPath = "Resources/logs";
+		private string _folderPath;
 		private readonly Queue<LogMessage> _writeQueue; // We use the queue to prevent collisions
 
 		private Thread _writeThread;
 
-		public Logger(bool shouldFileLog = false)
+		public Logger(string folderPath, bool shouldFileLog = false)
 		{
+			_folderPath = folderPath;
+
 			Console.ResetColor();
 			_defaultColor = Console.ForegroundColor;
 			ShouldFileLog = shouldFileLog;
@@ -56,7 +58,7 @@ namespace Appalachia.Services
 		}
 
 		// object accepters
-		public void Info(object obj, [CallerMemberName] string source = "", [CallerArgumentExpression("obj")] string expression = "") => Info($"{expression}: {obj.ToStringAllowNull()}", source);
+		public void Info(object obj, [CallerMemberName] string source = "") => Info(obj.ToStringAllowNull(), source);
 		public void Warn(object obj, Exception exception = null, [CallerMemberName] string source = "") => Warn(obj.ToStringAllowNull(), exception, source);
 		public void Error(object obj, Exception exception = null, [CallerMemberName] string source = "") => Error(obj.ToStringAllowNull(), exception, source);
 		public void Critical(object obj, Exception exception = null, [CallerMemberName] string source = "") => Critical(obj.ToStringAllowNull(), exception, source);
@@ -67,7 +69,7 @@ namespace Appalachia.Services
 			Debug(obj.ToStringAllowNull(), source);
 #endif
 		}
-		
+
 
 		public void Log(LogMessage message)
 		{
@@ -100,11 +102,8 @@ namespace Appalachia.Services
 				};
 				AppalachiaConsole.WriteLine(write);
 
-				lock (__streamLock)
-				{
-					if (ShouldFileLog && _stream != null)
-						_stream.Write(Encoding.UTF8.GetBytes($"{write}\n"));
-				}
+				if (ShouldFileLog)
+					_stream.Write(Encoding.UTF8.GetBytes($"{write}\n"));
 			}
 		}
 		private void WriteAllFromQueue()
@@ -112,7 +111,7 @@ namespace Appalachia.Services
 			while (_writeQueue.Count > 0)
 				LogFromQueue(_writeQueue.Dequeue());
 			if (ShouldFileLog)
-				RestartStream();
+				lock (__streamLock) _stream.Flush();
 		}
 
 		public void Close()
@@ -148,17 +147,6 @@ namespace Appalachia.Services
 			_stream.Write(Encoding.UTF8.GetBytes($"Starting Log: {fileName} ({DateTime.Now:HH:mm:ss.fff})\n"));
 			if (_writeQueue.Count > 0)
 				StartWriteThread();
-		}
-		private void RestartStream()
-		{
-			lock (__streamLock)
-			{
-				_stream.Close();
-				_stream = new FileStream(_logFile, FileMode.Append);
-
-				if (_writeQueue.Count > 0)
-					StartWriteThread();
-			}
 		}
 
 		private void StartWriteThread()
