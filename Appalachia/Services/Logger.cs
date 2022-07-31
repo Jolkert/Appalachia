@@ -25,7 +25,7 @@ namespace Appalachia.Services
 		private readonly ConsoleColor _defaultColor;
 		private string _logFile;
 		private FileStream _stream;
-		private string _folderPath;
+		private readonly string _folderPath;
 		private readonly Queue<LogMessage> _writeQueue; // We use the queue to prevent collisions
 
 		private Thread _writeThread;
