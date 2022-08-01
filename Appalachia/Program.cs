@@ -433,7 +433,7 @@ namespace Appalachia
 		}
 		public static void Stop()
 		{
-			Logger.Close();
+			Logger?.Close();
 			Environment.Exit(Environment.ExitCode);
 		}
 
