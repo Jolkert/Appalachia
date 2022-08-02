@@ -36,8 +36,7 @@ namespace Appalachia.Modules
 		[Command("shutdown"), Alias("stop"), Name("Shutdown")]
 		public Task Shutdown()
 		{
-			Program.Logger.Info("Shutting down bot...");
-			Program.Stop();
+			Task.Run(Program.Stop);
 			return Task.CompletedTask;
 		}
 

@@ -25,12 +25,20 @@ namespace Appalachia
 
 		private static DailyTrigger MidnightTrigger { get; } = new DailyTrigger();
 
+		public static bool IsStopping { get; private set; } = false;
 
 		private static void Main()
 		{
 			Console.Title = $"{Name} v{Version}";
 			Logger = new Logger("Resources/logs", Config?.Settings.OutputLogsToFile ?? true);
-			
+
+			// TODO: make an actual command handler for this stuff lol
+			AppalachiaConsole.CommandInput += (string input) =>
+			{
+				if (input.ToLowerInvariant() == "stop")
+					Stop();
+			};
+
 			try
 			{
 				StartAsync().GetAwaiter().GetResult();
@@ -42,6 +50,7 @@ namespace Appalachia
 			}
 			finally
 			{// this way if theres an error thrown, we still close the logger to make sure everything is good here -jolk 2022-05-01
+				IsStopping = true;
 				Logger?.Close();
 			}
 		}
@@ -433,6 +442,12 @@ namespace Appalachia
 		}
 		public static void Stop()
 		{
+			IsStopping = true;
+			Logger.Info("Shutting down bot...");
+			Logger.Info("Waiting for running commands to finish execution...");
+			Task.WaitAll(CommandHandler.RunningCommands.Values.ToArray());
+			Logger.Info("All commands finished execution! Shutting down!");
+
 			Logger?.Close();
 			Environment.Exit(Environment.ExitCode);
 		}

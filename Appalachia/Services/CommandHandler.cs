@@ -4,6 +4,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace Appalachia.Services
 	class CommandHandler
 	{
 		public static CommandService Commands { get; private set; }
+		public static Dictionary<ulong, Task> RunningCommands { get; } = new Dictionary<ulong, Task>(20);
 
 		private readonly CommandService _commands;
 		private readonly DiscordSocketClient _client;
@@ -36,6 +38,9 @@ namespace Appalachia.Services
 
 		private Task MessageReceivedAsync(SocketMessage rawMessage)
 		{
+			if (Program.IsStopping)
+				return Task.CompletedTask;
+
 			if (rawMessage is not SocketUserMessage message)
 				return Task.CompletedTask;
 
@@ -46,7 +51,7 @@ namespace Appalachia.Services
 			if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix(Program.Config.Settings.CommandPrefix, ref argPos)))
 				return Task.CompletedTask;
 
-			Parallel.Invoke(async () =>
+			RunningCommands.Add(message.Id, Task.Run(async () =>
 			{
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
@@ -56,7 +61,10 @@ namespace Appalachia.Services
 
 				if (result.IsSuccess)
 					Program.Logger.Info($"Command took {stopwatch.ElapsedMilliseconds} ms");
-			});
+
+				RunningCommands.Remove(context.Message.Id);
+			}));
+			
 
 			return Task.CompletedTask;
 		}
@@ -68,7 +76,7 @@ namespace Appalachia.Services
 			else if (result.IsSuccess)
 				Program.Logger.Info($"[{context.User.GetFullUsername()}] ran [{command.Value.Name}] in [{context.GetGuildChannelName()}]");
 			else
-				Program.Logger.Warn($"Something has gone terribly wrong! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{result}]");
+				Program.Logger.Error($"An error occured while attempting to run a command! [{context.User.GetFullUsername()}] in [{context.GetGuildChannelName()}] / [{result}]");
 
 			return Task.CompletedTask;
 		}
