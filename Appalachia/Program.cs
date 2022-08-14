@@ -1,4 +1,5 @@
-﻿using Appalachia.Data;
+﻿using Appalachia.ConsoleInput;
+using Appalachia.Data;
 using Appalachia.Extensions;
 using Appalachia.Services;
 using Appalachia.Utility;

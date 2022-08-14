@@ -1,4 +1,5 @@
-﻿using Appalachia.Extensions;
+﻿using Appalachia.ConsoleInput;
+using Appalachia.Extensions;
 using Discord;
 using System;
 using System.Collections.Generic;

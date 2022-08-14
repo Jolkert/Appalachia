@@ -10,7 +10,7 @@ using System.Threading;
  * 4. Make it less scuffed. I know for certain that I'll come back to this later and realize that it's garbage and do a big rewrite eventually current date: (2022-07-28)
  * 5. 
  */
-namespace Appalachia.Services
+namespace Appalachia.ConsoleInput
 {
 	public static class AppalachiaConsole
 	{
@@ -45,7 +45,7 @@ namespace Appalachia.Services
 
 			if (_inputThread.ThreadState != ThreadState.Unstarted)
 				_inputThread = new Thread(ReadInput) { Name = "Input" };
-			
+
 			_inputThread.Start();
 			return true;
 		}
@@ -127,7 +127,7 @@ namespace Appalachia.Services
 				_inputHistory.AddFirst(inputTrimmed);
 			_currentNode = null;
 
-			_inputStart += (_lastOutputPos.Y - _inputStart.Y);
+			_inputStart += _lastOutputPos.Y - _inputStart.Y;
 			_inputPos = _inputStart;
 		}
 
@@ -170,8 +170,8 @@ namespace Appalachia.Services
 				Console.Write($"{(isInputEcho ? "> " : "")}{str}");
 				_lastOutputPos = Console.GetCursorPosition();
 
-				_inputPos += (_lastOutputPos.Y - _inputPos.Y);
-				_inputStart += (_lastOutputPos.Y - _inputStart.Y);
+				_inputPos += _lastOutputPos.Y - _inputPos.Y;
+				_inputStart += _lastOutputPos.Y - _inputStart.Y;
 
 				Console.ForegroundColor = InputColor;
 				Console.SetCursorPosition(_inputStart.X, _inputStart.Y);
@@ -192,7 +192,7 @@ namespace Appalachia.Services
 			lock (__lock)
 			{
 				int offset = _inputPos.X, overflow = 0;
-				if ((input.Key is (ConsoleKey.Backspace or ConsoleKey.Delete)) && offset > 0) // pattern matching slaps wtf? -jolk 2022-07-24
+				if (input.Key is ConsoleKey.Backspace or ConsoleKey.Delete && offset > 0) // pattern matching slaps wtf? -jolk 2022-07-24
 				{
 					offset--;
 					overflow++;
@@ -200,7 +200,7 @@ namespace Appalachia.Services
 
 				UpdateInput(offset, overflow);
 
-				if ((input.KeyChar is not ('\n' or '\r')) && input.Key != ConsoleKey.Delete)
+				if (input.KeyChar is not ('\n' or '\r') && input.Key != ConsoleKey.Delete)
 				{
 					if (input.KeyChar == '\b')
 						_inputPos <<= _inputPos != _inputStart ? 1 : 0;
@@ -217,7 +217,7 @@ namespace Appalachia.Services
 			CursorPos lastPos = Console.GetCursorPosition();
 
 			Console.SetCursorPosition(_inputStart.X, _inputStart.Y);
-			Console.Write(new String(' ', _inputLine.Count));
+			Console.Write(new string(' ', _inputLine.Count));
 
 			Console.SetCursorPosition(lastPos.X, lastPos.Y);
 		}
@@ -227,7 +227,7 @@ namespace Appalachia.Services
 
 			CursorPos startPos = _inputStart >> offset;
 			Console.SetCursorPosition(startPos.X, startPos.Y);
-			Console.Write(new String(' ', _inputLine.Count - offset + overflow));
+			Console.Write(new string(' ', _inputLine.Count - offset + overflow));
 
 			Console.SetCursorPosition(startPos.X, startPos.Y);
 			Console.ForegroundColor = InputColor;
@@ -260,7 +260,7 @@ namespace Appalachia.Services
 			// TODO: consider that lol
 			public int DistanceFrom(CursorPos otherPos)
 			{
-				return (Console.BufferWidth * (this.Y - otherPos.Y)) + (this.X - otherPos.X);
+				return Console.BufferWidth * (Y - otherPos.Y) + (X - otherPos.X);
 			}
 
 			public override string ToString() => $"({X}, {Y})";
