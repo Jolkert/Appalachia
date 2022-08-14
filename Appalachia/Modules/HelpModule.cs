@@ -44,7 +44,7 @@ namespace Appalachia.Modules
 		{
 			command = command.ToLowerInvariant();
 
-			ModuleInfo module = Services.CommandHandler.Commands.Modules.Where(mod => mod.Aliases.Contains(command)).FirstOrDefault();
+			ModuleInfo module = Program.CommandHandler.Commands.Modules.Where(mod => mod.Aliases.Contains(command)).FirstOrDefault();
 			CommandInfo helpCommand = module?.Commands.Where(cmd => cmd.Aliases.Contains($"{command} help")).FirstOrDefault();
 
 			if (helpCommand == null)

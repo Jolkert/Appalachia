@@ -19,7 +19,7 @@ namespace Appalachia.Modules
 		[Command("help"), Alias("?"), Priority(int.MaxValue)] // does this do anything? i doubt it; update: apparently it does! -jolk 2022-04-28
 		public async Task HelpCommand()
 		{
-			ModuleInfo foundModule = CommandHandler.Commands.Modules.Where(mod => mod.Name == ModuleName).FirstOrDefault();
+			ModuleInfo foundModule = Program.CommandHandler.Commands.Modules.Where(mod => mod.Name == ModuleName).FirstOrDefault();
 			string mainAlias = foundModule?.Aliases[0];
 			IEnumerable<string> aliases = foundModule?.Aliases.Select(cmdStr => cmdStr.Split(' ').Last()).Distinct();
 

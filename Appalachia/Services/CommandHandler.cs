@@ -10,28 +10,28 @@ namespace Appalachia.Services
 {
 	class CommandHandler
 	{
-		public static CommandService Commands { get; private set; }
-		public static Dictionary<ulong, Task> RunningCommands { get; } = new Dictionary<ulong, Task>(20);
+		// public static CommandService Commands { get; private set; }
+		public Dictionary<ulong, Task> RunningCommands { get; } = new Dictionary<ulong, Task>(20);
 
-		private readonly CommandService _commands;
+		public CommandService Commands { get; }
 		private readonly DiscordSocketClient _client;
 
 		public CommandHandler(DiscordSocketClient client, CommandService commandService)
 		{
 			_client = client;
-			_commands = commandService;
+			Commands = commandService;
 
 			_client.MessageReceived += MessageReceivedAsync;
-			_commands.CommandExecuted += CommandExecutedAsync;
+			Commands.CommandExecuted += CommandExecutedAsync;
 
-			_commands.Log += Program.LogAsync;
+			Commands.Log += Program.LogAsync;
 
-			Commands = _commands; // I'm pretty sure this is like. Not a good idea but that's okay -jolk 2022-08-13
+			// Commands = _commands; // I'm pretty sure this is like. Not a good idea but that's okay -jolk 2022-08-13
 		}
 
 		public async Task InitializeAsync()
 		{
-			await _commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), null);
+			await Commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), null);
 		}
 
 		private Task MessageReceivedAsync(SocketMessage rawMessage)
@@ -54,7 +54,7 @@ namespace Appalachia.Services
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
 				SocketCommandContext context = new SocketCommandContext(_client, message);
-				IResult result = await _commands.ExecuteAsync(context, argPos, null);
+				IResult result = await Commands.ExecuteAsync(context, argPos, null);
 				stopwatch.Stop();
 
 				if (result.IsSuccess)

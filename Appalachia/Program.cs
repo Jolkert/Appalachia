@@ -20,6 +20,7 @@ namespace Appalachia
 		public static string Version { get; } = Assembly.GetAssembly(typeof(Program)).GetName().Version.ToString(3); // DONT FORGET TO CHANGE THIS WHEN YOU DO UPDATES. I KNOW YOU WILL. DONT FORGET -jolk 2022-01-09
 
 		public static DiscordSocketClient Client { get; private set; }
+		public static CommandHandler CommandHandler { get; private set; }
 		public static Logger Logger { get; private set; }
 		public static BotConfig Config { get; } = new BotConfig();
 
@@ -68,7 +69,7 @@ namespace Appalachia
 			Logger.Debug("You are currently running a debug build of Appalachia. Bugs and errors may be present!");
 
 			Client = new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All });
-			CommandHandler commandHandler = new CommandHandler(Client, new CommandService());
+			CommandHandler = new CommandHandler(Client, new CommandService());
 
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
@@ -78,14 +79,11 @@ namespace Appalachia
 			Client.MessageReceived += FilterWordsAsync;
 			Client.UserJoined += AddDefaultRole;
 
-			
-
 			MidnightTrigger.Trigger += Logger.Restart;
-
 
 			await Client.LoginAsync(TokenType.Bot, Config.Settings.Token);
 			await Client.StartAsync();
-			await commandHandler.InitializeAsync();
+			await CommandHandler.InitializeAsync();
 
 			AppalachiaConsole.StartRead();
 			await Task.Delay(-1);
