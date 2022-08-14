@@ -10,7 +10,6 @@ namespace Appalachia.Services
 {
 	class CommandHandler
 	{
-		// public static CommandService Commands { get; private set; }
 		public Dictionary<ulong, Task> RunningCommands { get; } = new Dictionary<ulong, Task>(20);
 
 		public CommandService Commands { get; }
