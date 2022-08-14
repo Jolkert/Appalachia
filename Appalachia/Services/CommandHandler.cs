@@ -25,8 +25,6 @@ namespace Appalachia.Services
 			Commands.CommandExecuted += CommandExecutedAsync;
 
 			Commands.Log += Program.LogAsync;
-
-			// Commands = _commands; // I'm pretty sure this is like. Not a good idea but that's okay -jolk 2022-08-13
 		}
 
 		public async Task InitializeAsync()
@@ -63,7 +61,6 @@ namespace Appalachia.Services
 				RunningCommands.Remove(context.Message.Id);
 			}));
 			
-
 			return Task.CompletedTask;
 		}
 
