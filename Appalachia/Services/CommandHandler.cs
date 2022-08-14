@@ -2,8 +2,6 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -17,23 +15,23 @@ namespace Appalachia.Services
 
 		private readonly CommandService _commands;
 		private readonly DiscordSocketClient _client;
-		private readonly IServiceProvider _services;
 
-		public CommandHandler(IServiceProvider services)
+		public CommandHandler(DiscordSocketClient client, CommandService commandService)
 		{
-			_commands = services.GetRequiredService<CommandService>();
-			_client = services.GetRequiredService<DiscordSocketClient>();
-			_services = services;
+			_client = client;
+			_commands = commandService;
 
-			_commands.CommandExecuted += CommandExecutedAsync;
 			_client.MessageReceived += MessageReceivedAsync;
+			_commands.CommandExecuted += CommandExecutedAsync;
 
-			Commands = _commands;
+			_commands.Log += Program.LogAsync;
+
+			Commands = _commands; // I'm pretty sure this is like. Not a good idea but that's okay -jolk 2022-08-13
 		}
 
 		public async Task InitializeAsync()
 		{
-			await _commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), _services);
+			await _commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), null);
 		}
 
 		private Task MessageReceivedAsync(SocketMessage rawMessage)
@@ -56,7 +54,7 @@ namespace Appalachia.Services
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
 				SocketCommandContext context = new SocketCommandContext(_client, message);
-				IResult result = await _commands.ExecuteAsync(context, argPos, _services);
+				IResult result = await _commands.ExecuteAsync(context, argPos, null);
 				stopwatch.Stop();
 
 				if (result.IsSuccess)

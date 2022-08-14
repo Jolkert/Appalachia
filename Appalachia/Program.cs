@@ -6,7 +6,6 @@ using Appalachia.Utility;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,9 +67,8 @@ namespace Appalachia
 			Logger.Info($"Starting {Name} v{Version}");
 			Logger.Debug("You are currently running a debug build of Appalachia. Bugs and errors may be present!");
 
-
-			using ServiceProvider services = ConfigureServices();
-			Client = services.GetRequiredService<DiscordSocketClient>();
+			Client = new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All });
+			CommandHandler commandHandler = new CommandHandler(Client, new CommandService());
 
 			Client.Log += LogAsync;
 			Client.Ready += OnReadyAsync;
@@ -80,14 +78,14 @@ namespace Appalachia
 			Client.MessageReceived += FilterWordsAsync;
 			Client.UserJoined += AddDefaultRole;
 
-			services.GetRequiredService<CommandService>().Log += LogAsync;
+			
 
 			MidnightTrigger.Trigger += Logger.Restart;
 
 
 			await Client.LoginAsync(TokenType.Bot, Config.Settings.Token);
 			await Client.StartAsync();
-			await services.GetRequiredService<CommandHandler>().InitializeAsync();
+			await commandHandler.InitializeAsync();
 
 			AppalachiaConsole.StartRead();
 			await Task.Delay(-1);
@@ -436,7 +434,7 @@ namespace Appalachia
 			return $"{user.Mention} chose {selection} ({selection.ToEmote()})";
 		}
 
-		private static Task LogAsync(LogMessage message)
+		internal static Task LogAsync(LogMessage message)
 		{
 			Logger.Log(message);
 			return Task.CompletedTask;
@@ -451,15 +449,6 @@ namespace Appalachia
 
 			Logger?.Close();
 			Environment.Exit(Environment.ExitCode);
-		}
-
-		private static ServiceProvider ConfigureServices()
-		{
-			return new ServiceCollection()
-				.AddSingleton<DiscordSocketClient>(new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All }))
-				.AddSingleton<CommandService>()
-				.AddSingleton<CommandHandler>()
-				.BuildServiceProvider();
 		}
 	}
 }
