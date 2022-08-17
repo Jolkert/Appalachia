@@ -26,13 +26,16 @@ namespace Appalachia.ConsoleInput
 		private static List<char> _inputLine = new List<char>();
 		private static Thread _inputThread = new Thread(ReadInput) { Name = "Input" };
 
-		private static CursorPos _lastOutputPos = (0, 0);
-		private static CursorPos _inputPos = (0, 0);
-		private static CursorPos _inputStart = (0, 0);
+		private static CursorPos _lastOutputPos = CursorPos.Origin;
+		private static CursorPos _inputPos = CursorPos.Origin;
+		private static CursorPos _inputStart = CursorPos.Origin;
 
 		private static readonly ConsoleColor _defaultColor = Console.ForegroundColor;
 		public static ConsoleColor OutputColor { get; set; } = _defaultColor;
 		public static ConsoleColor InputColor { get; set; } = _defaultColor;
+
+		private static string _inputPrefix = "";
+		public static string InputPrefix { get => _inputPrefix; set => UpdateInputPrefix(value); }
 
 		public static bool EchoInput { get; set; } = true;
 
@@ -69,17 +72,17 @@ namespace Appalachia.ConsoleInput
 				{
 					case ConsoleKey.Delete:
 						if (_inputLine.Count > 0 && _inputPos.X < _inputLine.Count)
-							_inputLine.RemoveAt(_inputPos.X);
+							_inputLine.RemoveAt(_inputPos.X - InputPrefix.Length);
 						break;
 					case ConsoleKey.LeftArrow:
 						if (_inputPos > _inputStart)
 							_inputPos <<= 1;
-						Console.CursorLeft = _inputPos.X;
+						Console.CursorLeft = _inputPos.X - InputPrefix.Length;
 						break;
 					case ConsoleKey.RightArrow:
 						if (_inputPos.DistanceFrom(_inputStart) < _inputLine.Count)
 							_inputPos >>= 1;
-						Console.CursorLeft = _inputPos.X;
+						Console.CursorLeft = _inputPos.X - InputPrefix.Length;
 						break;
 					case ConsoleKey.UpArrow:
 						MoveNodeForward();
@@ -119,7 +122,7 @@ namespace Appalachia.ConsoleInput
 			ClearInput();
 
 			if (EchoInput)
-				Write($"{inputString}\n", true);
+				Write($"{_inputPrefix}{inputString}\n", true);
 
 
 			OnCommandInput(inputTrimmed);
@@ -167,15 +170,15 @@ namespace Appalachia.ConsoleInput
 
 				Console.ForegroundColor = isInputEcho ? InputColor : OutputColor;
 				Console.SetCursorPosition(_lastOutputPos.X, _lastOutputPos.Y);
-				Console.Write($"{(isInputEcho ? "> " : "")}{str}");
+				Console.Write(str);
 				_lastOutputPos = Console.GetCursorPosition();
 
 				_inputPos += _lastOutputPos.Y - _inputPos.Y;
 				_inputStart += _lastOutputPos.Y - _inputStart.Y;
 
 				Console.ForegroundColor = InputColor;
-				Console.SetCursorPosition(_inputStart.X, _inputStart.Y);
-				Console.Write(_inputLine.Stringify());
+				Console.SetCursorPosition(0, _inputStart.Y);
+				Console.Write($"{InputPrefix}{_inputLine.Stringify()}");
 				Console.SetCursorPosition(_inputPos.X, _inputPos.Y);
 
 				Console.ResetColor();
@@ -191,7 +194,7 @@ namespace Appalachia.ConsoleInput
 		{
 			lock (__lock)
 			{
-				int offset = _inputPos.X, overflow = 0;
+				int offset = _inputPos.X - InputPrefix.Length, overflow = 0;
 				if (input.Key is ConsoleKey.Backspace or ConsoleKey.Delete && offset > 0) // pattern matching slaps wtf? -jolk 2022-07-24
 				{
 					offset--;
@@ -231,10 +234,24 @@ namespace Appalachia.ConsoleInput
 
 			Console.SetCursorPosition(startPos.X, startPos.Y);
 			Console.ForegroundColor = InputColor;
+			if (offset < 0)
+			{
+				Console.Write(InputPrefix);
+				offset = 0;
+			}
 			Console.Write(_inputLine.Stringify()[offset..]);
 			Console.ResetColor();
 
 			Console.SetCursorPosition(lastPos.X, lastPos.Y);
+		}
+		private static void UpdateInputPrefix(string newPrefix)
+		{
+			_inputStart >>= newPrefix.Length - _inputPrefix.Length;
+			_inputPos >>= newPrefix.Length - _inputPrefix.Length;
+			Console.SetCursorPosition(_inputPos.X, _inputPos.Y);
+
+			_inputPrefix = newPrefix;
+			UpdateInput(-_inputStart.X);
 		}
 
 		public static void ResetColors()

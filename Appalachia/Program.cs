@@ -32,13 +32,7 @@ namespace Appalachia
 		{
 			Console.Title = $"{Name} v{Version}";
 			Logger = new Logger("Resources/logs", Config?.Settings.OutputLogsToFile ?? true);
-
-			// TODO: make an actual command handler for this stuff lol
-			AppalachiaConsole.CommandInput += (string input) =>
-			{
-				if (input.ToLowerInvariant() == "stop")
-					Stop();
-			};
+			AppalachiaConsole.InputPrefix = "> ";
 
 			try
 			{
