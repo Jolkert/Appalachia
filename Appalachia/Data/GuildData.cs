@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting;
 
 namespace Appalachia.Data
 {
@@ -103,10 +104,7 @@ namespace Appalachia.Data
 		public KeyValuePair<ulong, Guild.UserScore>[] GetSortedRpsLeaderboard(ulong guildId)
 		{
 			return _data.GetValueOrDefault(guildId)?.RpsLeaderboard.ToArray()
-						.OrderByDescending(pair => pair.Value.Elo)
-						.ThenByDescending(pair => pair.Value.WinRate)
-						.ThenByDescending(pair => pair.Value.Wins)
-						.ThenBy(pair => pair.Value.Losses)
+						.OrderBy(pair => pair.Value)
 						.ThenBy(pair => pair.Key).ToArray();
 		}
 
@@ -286,7 +284,7 @@ namespace Appalachia.Data
 			this.FilteredWords = new List<string>();
 		}
 
-		public class UserScore
+		public class UserScore : IComparable<UserScore>
 		{
 			public int Elo { get; set; }
 			public int Wins { get; set; }
@@ -325,6 +323,20 @@ namespace Appalachia.Data
 			public bool Equals(UserScore score)
 			{
 				return this.Wins == score.Wins && this.Losses == score.Losses;
+			}
+
+			public int CompareTo(UserScore other)
+			{
+				if (this.Elo != other.Elo)
+					return other.Elo - this.Elo;
+
+				if (this.WinRate != other.WinRate)
+					return (int)(other.WinRate - this.WinRate);
+
+				if (this.Wins != other.Wins)
+					return other.Wins - this.Wins;
+
+				return this.Losses - other.Losses;
 			}
 		}
 	}
