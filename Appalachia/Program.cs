@@ -52,7 +52,7 @@ namespace Appalachia
 
 		private static async Task StartAsync()
 		{
-			if (Config.Settings.Token == null || Config.Settings.Token == "BOT_TOKEN_GOES_HERE")
+			if (Config.Settings.Token is null or "BOT_TOKEN_GOES_HERE")
 				throw new ConfigException("Bot token not found. Make sure you have your bot token set in Resources/config.json!", nameof(Config.Settings.Token));
 			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
 				throw new ConfigException("Command prefix not found. Make sure you have your command prefix set in Resources/config.json!", nameof(Config.Settings.CommandPrefix));

@@ -146,15 +146,15 @@ namespace Appalachia.Modules
 			else if (calls < 1)
 				await context.Channel.SendErrorMessageAsync("Why would you even try that?");
 			else
-			{	
+			{
 				(int[] rolls, int total) = Rng(min, max, calls);
 				await context.Message.ReplyEmbedAsync(new EmbedBuilder().WithTitle("RNGesus says:")
 													   .WithDescription($"{context.User.Mention} rolled\n{GenerateRollString(rolls, total, min, max)}")
 													   .WithColor(GetRollColor(total, min, max, calls)));
-				
+
 			}
 
-			
+
 		}
 		private static string GenerateRollString(int[] rolls, int total, int min, int max)
 		{

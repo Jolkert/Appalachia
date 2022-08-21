@@ -1,5 +1,4 @@
 ﻿using Appalachia.Extensions;
-using Appalachia.Services;
 using Appalachia.Utility;
 using Discord;
 using Discord.Commands;

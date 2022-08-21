@@ -83,7 +83,7 @@ namespace Appalachia.Modules
 			{
 				foreach (IGuildUser user in subcontainer)
 				{
-		 			output += $"\t- {user.GetFullUsername()} ({user.Id})\n";
+					output += $"\t- {user.GetFullUsername()} ({user.Id})\n";
 					foreach (SocketRole role in user.RoleIds.Select(id => guild.GetRole(id)).OrderByDescending(r => r.Position).Where(r => !r.IsEveryone))
 						output += $"\t\t- {role.Name}\n";
 				}

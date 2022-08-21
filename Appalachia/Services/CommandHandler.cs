@@ -59,7 +59,7 @@ namespace Appalachia.Services
 
 				RunningCommands.Remove(context.Message.Id);
 			}));
-			
+
 			return Task.CompletedTask;
 		}
 
