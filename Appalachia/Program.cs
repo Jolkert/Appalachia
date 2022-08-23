@@ -54,7 +54,7 @@ namespace Appalachia
 		{
 			if (Config.Settings.Token is null or "BOT_TOKEN_GOES_HERE")
 				throw new ConfigException("Bot token not found. Make sure you have your bot token set in Resources/config.json!", nameof(Config.Settings.Token));
-			if (Config.Settings.CommandPrefix == null || Config.Settings.CommandPrefix == string.Empty)
+			if (Config.Settings.CommandPrefix is null or "")
 				throw new ConfigException("Command prefix not found. Make sure you have your command prefix set in Resources/config.json!", nameof(Config.Settings.CommandPrefix));
 			if (!Config.Settings.OutputLogsToFile)
 				Logger.Info($"{nameof(Config.Settings.OutputLogsToFile)} false in config. Logs of bot activity will not be saved!");
