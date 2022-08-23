@@ -4,9 +4,7 @@ namespace Appalachia.Data
 {
 	public class FilteredWords : BaseJsonDataHolder<List<string>>
 	{
-		private const string GolbalFilterFile = "filtered_words.json";
-
-		public FilteredWords() : base(GolbalFilterFile, new List<string>()) { }
+		public FilteredWords(string fileName) : base(fileName, new List<string>()) { }
 
 		public string[] GetFilteredWords()
 		{

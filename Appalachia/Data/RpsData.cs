@@ -5,8 +5,6 @@ namespace Appalachia.Data
 {
 	public class RpsData : BaseJsonDataHolder<Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>>
 	{
-		private const string RpsFile = "rps.json";
-
 		private Dictionary<ulong, RpsChallenge> Challenges
 		{
 			get => _data[DataKey.Challenges];
@@ -18,7 +16,7 @@ namespace Appalachia.Data
 			set => _data[DataKey.ActiveGames] = value;
 		}
 
-		public RpsData() : base(RpsFile, new Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>(){
+		public RpsData(string fileName) : base(fileName, new Dictionary<DataKey, Dictionary<ulong, RpsChallenge>>(){
 			{ DataKey.Challenges, new Dictionary<ulong, RpsChallenge>() },
 			{ DataKey.ActiveGames, new Dictionary<ulong, RpsChallenge>() }
 		})
@@ -98,9 +96,6 @@ namespace Appalachia.Data
 			GetActiveGame(gameId).Selections = new ChallengerOpponentPair<RpsSelection>(RpsSelection.None, isBotMatch ? (RpsSelection)(1 << Util.Rand.Next(3)) : RpsSelection.None);
 			WriteJson();
 		}
-
-		public override void ReloadJson() => base.ReloadJson(true);
-		public override void WriteJson() => base.WriteJson(true);
 	}
 
 	public class RpsChallenge

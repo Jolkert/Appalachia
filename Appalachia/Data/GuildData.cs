@@ -12,9 +12,8 @@ namespace Appalachia.Data
 		// currently debating whether i should put leaderboards in GuildData or make it its own thing
 		// making it its own thing *does* open up the possibility of global leaderboards. which could be interesting
 		// either way its 4am. im going to sleep -jolk 2022-01-10
-		private const string GuildsFile = "guilds.json";
 
-		public GuildData() : base(GuildsFile, new Dictionary<ulong, Guild>()) { }
+		public GuildData(string fileName) : base(fileName, new Dictionary<ulong, Guild>()) { }
 
 		// i did it. these are in Extensions now -jolk 2022-02-15
 		// also cleaned up the methods in here. still like. dont use them outside of the extensions tho. thanks -jolk 2022-02-15

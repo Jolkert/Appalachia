@@ -4,10 +4,9 @@ namespace Appalachia.Data
 {
 	public class BotConfig : BaseJsonDataHolder<ConfigOptions>
 	{
-		private const string ConfigFile = "config.json";
 		public ConfigOptions Settings { get => _data; private set => _data = value; }
 
-		public BotConfig() : base(ConfigFile, ConfigOptions.DefaultSettings) { }
+		public BotConfig(string fileName) : base(fileName, ConfigOptions.DefaultSettings) { }
 
 		public void SetToken(string token)
 		{

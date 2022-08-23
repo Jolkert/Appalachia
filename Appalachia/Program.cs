@@ -22,7 +22,7 @@ namespace Appalachia
 		public static DiscordSocketClient Client { get; private set; }
 		public static CommandHandler CommandHandler { get; private set; }
 		public static Logger Logger { get; private set; }
-		public static BotConfig Config { get; } = new BotConfig();
+		public static BotConfig Config { get; } = new BotConfig("config.json");
 
 		private static DailyTrigger MidnightTrigger { get; } = new DailyTrigger();
 
