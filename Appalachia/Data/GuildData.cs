@@ -287,7 +287,7 @@ namespace Appalachia.Data
 			public int Elo { get; set; }
 			public int Wins { get; set; }
 			public int Losses { get; set; }
-			public double WinRate { get => (Wins + Losses == 0) ? 0 : (double)Wins / (Losses + Wins); }
+			public double WinRate { get => (Wins + Losses != 0) ? (double)Wins / (Losses + Wins) : 0; }
 
 			private static readonly double EloSensitivity = 40.0d; // this controls how much elo changes after a match. bigger number == bigger change -jolk 2022-03-22
 
