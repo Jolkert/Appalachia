@@ -1,40 +1,39 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 
-namespace Appalachia.Data
+namespace Appalachia.Data;
+
+public abstract class BaseJsonDataHolder<T> : IJsonDataHolder
 {
-	public abstract class BaseJsonDataHolder<T> : IJsonDataHolder
+	private const string DataFolder = "Resources/data";
+	private readonly string _fileName;
+	private static readonly JsonSerializerSettings TypeSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+
+	protected T _data;
+
+	public BaseJsonDataHolder(string fileName, T defaultData)
 	{
-		private const string DataFolder = "Resources/data";
-		private readonly string _fileName;
-		private static readonly JsonSerializerSettings TypeSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+		_fileName = $"{DataFolder}/{fileName}";
 
-		protected T _data;
+		if (!Directory.Exists(DataFolder))
+			Directory.CreateDirectory(DataFolder);
 
-		public BaseJsonDataHolder(string fileName, T defaultData)
+		if (!File.Exists(_fileName))
 		{
-			_fileName = $"{DataFolder}/{fileName}";
-
-			if (!Directory.Exists(DataFolder))
-				Directory.CreateDirectory(DataFolder);
-
-			if (!File.Exists(_fileName))
-			{
-				_data = defaultData;
-				WriteJson();
-			}
-			else
-				ReloadJson();
+			_data = defaultData;
+			WriteJson();
 		}
+		else
+			ReloadJson();
+	}
 
-		public virtual void ReloadJson()
-		{
-			_data = JsonConvert.DeserializeObject<T>(File.ReadAllText(_fileName), TypeSettings);
-			Program.Logger?.Info($"{GetType().Name} reloaded!");
-		}
-		public virtual void WriteJson()
-		{
-			File.WriteAllText(_fileName, JsonConvert.SerializeObject(_data, Formatting.Indented, TypeSettings));
-		}
+	public virtual void ReloadJson()
+	{
+		_data = JsonConvert.DeserializeObject<T>(File.ReadAllText(_fileName), TypeSettings);
+		Program.Logger?.Info($"{GetType().Name} reloaded!");
+	}
+	public virtual void WriteJson()
+	{
+		File.WriteAllText(_fileName, JsonConvert.SerializeObject(_data, Formatting.Indented, TypeSettings));
 	}
 }

@@ -1,10 +1,9 @@
-﻿namespace Appalachia.Utility
+﻿namespace Appalachia.Utility;
+
+public enum RpsWinner
 {
-	public enum RpsWinner
-	{
-		Undecided = -1,
-		Opponent = 0,
-		Draw = 1,
-		Challenger = 2
-	}
+	Undecided = -1,
+	Opponent = 0,
+	Draw = 1,
+	Challenger = 2
 }

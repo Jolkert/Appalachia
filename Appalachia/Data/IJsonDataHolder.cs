@@ -1,8 +1,7 @@
-﻿namespace Appalachia.Data
+﻿namespace Appalachia.Data;
+
+public interface IJsonDataHolder
 {
-	public interface IJsonDataHolder
-	{
-		public abstract void ReloadJson();
-		public abstract void WriteJson();
-	}
+	public abstract void ReloadJson();
+	public abstract void WriteJson();
 }
