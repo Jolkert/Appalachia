@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Appalachia.Extensions;
@@ -86,7 +87,18 @@ public static class ConversionExtensions
 	}
 	public static string Repeat(this string str, int times)
 	{
-		return String.Concat(Enumerable.Repeat(str, times));
+		switch (str.Length)
+		{
+			case 0:
+				return "";
+			case 1:
+				return new string(str[0], times);
+			default:
+				StringBuilder builder = new StringBuilder(str.Length * times);
+				for (int i = 0; i < times; i++)
+					builder.Append(str);
+				return builder.ToString();
+		}
 	}
 	public static string ToStringAllowNull(this object obj)
 	{
