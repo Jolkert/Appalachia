@@ -55,7 +55,7 @@ public static class GuildExtensions
 		return (announcementChannel?.Id ?? 0, quoteChannel?.Id ?? 0);
 	}
 
-	public static KeyValuePair<ulong, Guild.UserScore>[] GetRpsLeaderboard(this SocketGuild guild)
+	public static IEnumerable<KeyValuePair<ulong, Guild.UserScore>> GetRpsLeaderboard(this SocketGuild guild)
 	{
 		return Guilds.GetSortedRpsLeaderboard(guild.Id);
 	}

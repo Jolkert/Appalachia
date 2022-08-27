@@ -83,14 +83,14 @@ public class GuildData : BaseJsonDataHolder<Dictionary<ulong, Guild>>
 	}
 	public int GetUserRank(ulong guildId, ulong userId)
 	{
-		KeyValuePair<ulong, Guild.UserScore>[] leaderboard = GetSortedRpsLeaderboard(guildId);
+		KeyValuePair<ulong, Guild.UserScore>[] leaderboard = GetSortedRpsLeaderboard(guildId).ToArray();
 
 		int rank = 1;
 		for (int i = 0; i < leaderboard.Length; i++)
 		{
 			KeyValuePair<ulong, Guild.UserScore> pair = leaderboard[i];
 
-			if (i > 0 && !pair.Equals(leaderboard[i - 1]))
+			if (i > 0 && pair.Value.Elo != leaderboard[i - 1].Value.Elo)
 				rank = i + 1;
 
 			if (pair.Key == userId)
@@ -99,11 +99,11 @@ public class GuildData : BaseJsonDataHolder<Dictionary<ulong, Guild>>
 
 		return -1;
 	}
-	public KeyValuePair<ulong, Guild.UserScore>[] GetSortedRpsLeaderboard(ulong guildId)
+	public IEnumerable<KeyValuePair<ulong, Guild.UserScore>> GetSortedRpsLeaderboard(ulong guildId)
 	{
 		return _data.GetValueOrDefault(guildId)?.RpsLeaderboard.ToArray()
 					.OrderBy(pair => pair.Value)
-					.ThenBy(pair => pair.Key).ToArray();
+					.ThenBy(pair => pair.Key);
 	}
 
 

@@ -87,6 +87,9 @@ public static class ConversionExtensions
 	}
 	public static string Repeat(this string str, int times)
 	{
+		if (times <= 1)
+			return str;
+
 		switch (str.Length)
 		{
 			case 0:
@@ -100,6 +103,11 @@ public static class ConversionExtensions
 				return builder.ToString();
 		}
 	}
+	public static string Repeat(this char chr, int times)
+	{
+		return new string(chr, times);
+	}
+
 	public static string ToStringAllowNull(this object obj)
 	{
 		return obj != null ? obj.ToString() : string.Empty;

@@ -22,11 +22,19 @@ public abstract class ModuleWithHelp : ModuleBase<SocketCommandContext>, IModule
 		string mainAlias = foundModule?.Aliases[0];
 		IEnumerable<string> aliases = foundModule?.Aliases.Select(cmdStr => cmdStr.Split(' ').Last()).Distinct();
 
-		List<EmbedFieldBuilder> fields = new List<EmbedFieldBuilder>();
-		fields.Add(new EmbedFieldBuilder().WithName("Usage").WithValue($"`{Program.Config.Settings.CommandPrefix}{mainAlias} {Usage}`").WithIsInline(false));
+		List<EmbedFieldBuilder> fields = new List<EmbedFieldBuilder>
+		{
+			new EmbedFieldBuilder().WithName("Usage")
+								   .WithValue($"`{Program.Config.Settings.CommandPrefix}{mainAlias} {Usage}`")
+								   .WithIsInline(false)
+		};
 
-		if (aliases != null && aliases.Count() > 1)
-			fields.Add(new EmbedFieldBuilder().WithName("Aliases").WithValue(string.Join(", ", aliases.Where(str => str != mainAlias).Select(str => $"`{str}`"))).WithIsInline(false));
+		if (aliases?.Count() > 1)
+		{
+			fields.Add(new EmbedFieldBuilder().WithName("Aliases")
+											  .WithValue(string.Join(", ", aliases.Where(str => str != mainAlias).Select(str => $"`{str}`")))
+											  .WithIsInline(false));
+		}
 
 		EmbedBuilder embed = new EmbedBuilder().WithTitle($"{ModuleName} Help")
 											   .WithDescription(Description)

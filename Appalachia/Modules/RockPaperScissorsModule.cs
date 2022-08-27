@@ -1,12 +1,15 @@
 ﻿using Appalachia.Data;
 using Appalachia.Extensions;
+using Appalachia.Services;
 using Appalachia.Utility;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Appalachia.Modules;
@@ -74,87 +77,98 @@ public class RockPaperScissorsModule : ModuleWithHelp
 			await message.AddReactionAsync(Reactions.RpsDeny);
 		}
 	}
+
 	[Command("leaderboard"), Alias("lb", "scores"), Name(Name + " lb")]
 	public async Task RockPaperScissorsLeaderboard(SocketGuildUser userFilter = null)
 	{
-		if (userFilter == null)
-		{// i actually really dont like this code, but it works so im leaving it at least for now -jolk 2022-03-22
-			KeyValuePair<ulong, Guild.UserScore>[] leaderboard = Context.Guild.GetRpsLeaderboard();
-
-			(int rank, string user, string elo, string wins, string losses, string winRate)[] userDataStrings = new (int, string, string, string, string, string)[leaderboard.Length];
-			// this is kinda gross but i think it might be the easiest way? -jolk 2022-03-15
-
-			int rank = 1, nameSpacing = 4, eloSpacing = 3, winsSpacing = 1, lossesSpacing = 1, winRateSpacing = 5;
-			for (int i = 0; i < leaderboard.Length; i++)
-			{
-				KeyValuePair<ulong, Guild.UserScore> pair = leaderboard[i];
-				if (i > 0 && pair.Value.Elo != leaderboard[i - 1].Value.Elo)
-					rank = i + 1;
-
-				SocketGuildUser user = Context.Guild.GetUser(pair.Key);
-				userDataStrings[i] = (rank, user.GetFullUsername(), pair.Value.Elo.ToString(), pair.Value.Wins.ToString(), pair.Value.Losses.ToString(), Math.Round(pair.Value.WinRate, 4).ToString("#.0000"));
-
-
-				// this is awful. please come up with a better way to do this thank -jolk 2022-03-17
-				if (userDataStrings[i].user.Length > nameSpacing)
-					nameSpacing = userDataStrings[i].user.Length;
-
-				if (userDataStrings[i].elo.Length > eloSpacing)
-					eloSpacing = userDataStrings[i].elo.Length;
-
-				if (userDataStrings[i].wins.Length > winsSpacing)
-					winsSpacing = userDataStrings[i].wins.Length;
-
-				if (userDataStrings[i].losses.Length > lossesSpacing)
-					lossesSpacing = userDataStrings[i].losses.Length;
-
-				if (userDataStrings[i].winRate.Length > winRateSpacing)
-					winRateSpacing = userDataStrings[i].winRate.Length;
-			}
-
-			int rankSpacing = (userDataStrings[^1].rank / 10) + 1;
-
-			string output = string.Format($"```{{0, -{rankSpacing}}}. │ {{1, -{nameSpacing}}} │ {{2, -{eloSpacing}}} │ {{3, {winsSpacing}}} │ {{4, {lossesSpacing}}} │ {{5, {winRateSpacing}}}",
-				"#", "USER", "ELO", "W", "L", "W/L");
-			output += $"\n{"═".Repeat(rankSpacing)}══╪═{"═".Repeat(nameSpacing)}═╪═{"═".Repeat(eloSpacing)}═╪═{"═".Repeat(winsSpacing)}═╪═{"═".Repeat(lossesSpacing)}═╪═{"═".Repeat(winRateSpacing)}";
-
-			bool top3 = false;
-			foreach ((int rank, string user, string elo, string wins, string losses, string winRate) data in userDataStrings)
-			{
-				if (!top3 && data.rank > 3)
-				{
-					output += $"\n{"┄".Repeat(rankSpacing)}┄┄┼┄{"┄".Repeat(nameSpacing)}┄┼┄{"┄".Repeat(eloSpacing)}┄┼┄{"┄".Repeat(winsSpacing)}┄┼┄{"┄".Repeat(lossesSpacing)}┄┼┄{"┄".Repeat(winRateSpacing)}";
-					top3 = true;
-				}
-
-				output += string.Format($"\n{{0, -{rankSpacing}}}. │ {{1, -{nameSpacing}}} │ {{2, {eloSpacing}}} │ {{3, {winsSpacing}}} │ {{4, {lossesSpacing}}} │ {{5, {winRateSpacing}}}",
-					data.rank, data.user, data.elo, data.wins, data.losses, data.winRate);
-			}
-
-			EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Leaderboard")
-				.WithDescription($"{output}```")
-				.WithThumbnailUrl(Context.Guild.IconUrl)
-				.WithColor(Context.Guild.GetColor());
-
-			await Context.Channel.SendEmbedAsync(embed);
-		}
+		if (userFilter is null)
+			await SendLeaderboard();
 		else
-		{
-			Guild.UserScore userScore = userFilter.GetGuildRpsScore();
-			EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Stats")
-									   .WithDescription($"Stats for {userFilter.Mention}\n")
-									   .WithFields(new EmbedFieldBuilder[]
-									   {
-										   new EmbedFieldBuilder().WithName("Rank in Server").WithValue($"{userFilter.GetGuildRpsRank().ToOrdinal()} ({userScore.Elo})").WithIsInline(false),
-										   new EmbedFieldBuilder().WithName("Wins").WithValue(userScore.Wins).WithIsInline(true),
-										   new EmbedFieldBuilder().WithName("Losses").WithValue(userScore.Losses).WithIsInline(true),
-										   new EmbedFieldBuilder().WithName("Win Rate").WithValue($"{userScore.WinRate * 100 : 0.0}%").WithIsInline(true)
-									   })
-									   .WithColor(Context.Guild.GetColor())
-									   .WithThumbnailUrl(userFilter.GetGuildOrDefaultAvatarUrl());
+			await SendUserScore(userFilter);
+	}
 
-			await Context.Channel.SendEmbedAsync(embed);
+	private async Task SendLeaderboard()
+	{
+		ScoreData[] leaderboard = (from entry in Context.Guild.GetRpsLeaderboard()
+								   select ScoreData.FromScore(Context.Guild, entry))
+								   .ToArray();
+
+		int currentRank = 1;
+		SpacingData spacings = new SpacingData();
+		for (int i = 0; i < leaderboard.Length; i++)
+		{
+			// set rank with elo ties ranked the same
+			if (i > 0 && leaderboard[i].Elo != leaderboard[i - 1].Elo)
+				currentRank = i + 1;
+			leaderboard[i].Rank = currentRank;
+
+			// get correct spacings
+			spacings = spacings.KeepMax(new SpacingData(leaderboard[i]));
 		}
+		int rankSpacing = (leaderboard[^1].Rank / 10) + 1;
+
+		int stringSize = 6 + (rankSpacing + spacings.Username +  spacings.Elo + spacings.Wins + spacings.Losses + spacings.WinRate + 17) * (leaderboard.Length + (leaderboard[^1].Rank > 3 ? 1 : 0) + 2);
+		// 6 for backticks; 17 breaks down to: 2/spacing except winrate (10) + 1 winrate spacing + 1/vertical bar (5) + 1 newline; rest should be pretty self-explanatory? I know it sucks -jolk 2022-08-26
+
+		string format = $"{{0, {-rankSpacing}}}. │ {{1, {-spacings.Username}}} | {{2, {spacings.Elo}}} │ {{3, {spacings.Wins}}} │ {{4, {spacings.Losses}}} │ {{5, {spacings.WinRate}}}";
+
+		StringBuilder displayBuilder = new StringBuilder("```", stringSize)
+										  .AppendFormat(format, "#", "USER", "ELO", "W", "L", "W/L")
+										  .Append('\n')
+										  .Append(GenerateHorizontalSeparator('═', '╪', rankSpacing + 2, spacings.Username + 2, spacings.Elo + 2, spacings.Wins + 2, spacings.Losses + 2, spacings.WinRate + 1))
+										  .Append('\n');
+
+		bool topThreeLinePlaced = false;
+		foreach (ScoreData score in leaderboard)
+		{
+			if (!topThreeLinePlaced && score.Rank > 3)
+			{
+				displayBuilder.Append(GenerateHorizontalSeparator('┄', '┼', rankSpacing + 2, spacings.Username + 2, spacings.Elo + 2, spacings.Wins + 2, spacings.Losses + 2, spacings.WinRate + 1))
+							  .Append('\n');
+				topThreeLinePlaced = true;
+			}
+
+			displayBuilder.AppendFormat(format, score.Rank, score.Username, score.Elo, score.Wins, score.Losses, score.WinRate)
+						  .Append('\n');
+		}
+		displayBuilder.Append("```");
+
+		EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Leaderboard")
+								.WithDescription(displayBuilder.ToString())
+								.WithThumbnailUrl(Context.Guild.IconUrl)
+								.WithColor(Context.Guild.GetColor());
+
+		await Context.Channel.SendEmbedAsync(embed);
+	}
+	private static StringBuilder GenerateHorizontalSeparator(char horizontal, char vertical, params int[] spacings)
+	{
+		StringBuilder builder = new StringBuilder(spacings.Sum() + spacings.Length - 1);
+		for (int i = 0; i < spacings.Length; i++)
+		{
+			builder.Append(horizontal.Repeat(spacings[i]));
+			if (i < spacings.Length - 1)
+				builder.Append(vertical);
+		}
+
+		return builder;
+	}
+
+	private async Task SendUserScore(SocketGuildUser user)
+	{
+		Guild.UserScore userScore = user.GetGuildRpsScore();
+		EmbedBuilder embed = new EmbedBuilder().WithTitle("Rock Paper Scissors Stats")
+											   .WithDescription($"Stats for {user.Mention}\n")
+											   .WithFields(new EmbedFieldBuilder[]
+											   {
+												   new EmbedFieldBuilder().WithName("Rank in Server").WithValue($"{user.GetGuildRpsRank().ToOrdinal()} ({userScore.Elo})").WithIsInline(false),
+												   new EmbedFieldBuilder().WithName("Wins").WithValue(userScore.Wins).WithIsInline(true),
+												   new EmbedFieldBuilder().WithName("Losses").WithValue(userScore.Losses).WithIsInline(true),
+												   new EmbedFieldBuilder().WithName("Win Rate").WithValue($"{userScore.WinRate * 100 : 0.0}%").WithIsInline(true)
+											   })
+											   .WithColor(Context.Guild.GetColor())
+											   .WithThumbnailUrl(user.GetGuildOrDefaultAvatarUrl());
+
+		await Context.Channel.SendEmbedAsync(embed);
 	}
 
 	[Command("leaderboard"), Alias("lb", "scores"), Name(Name + "/lb")]
@@ -164,5 +178,75 @@ public class RockPaperScissorsModule : ModuleWithHelp
 			await RockPaperScissorsLeaderboard(user); // whats the worst that can happen?? -jolk 2022-03-22
 		else
 			await Context.Channel.SendErrorMessageAsync($"Could not find user \"{userArg}\"");
+	}
+
+	private struct ScoreData
+	{
+		public int Rank { get; set; }
+		public string Username { get; }
+		public string Elo { get; }
+		public string Wins { get; }
+		public string Losses { get; }
+		public string WinRate { get; }
+
+		private ScoreData(int rank, string username, int elo, int wins, int losses, string winrate)
+		{
+			Rank = rank;
+			Username = username;
+			Elo = elo.ToString();
+			Wins = wins.ToString();
+			Losses = losses.ToString();
+			WinRate = winrate;
+		}
+
+		public static ScoreData FromScore(SocketGuild guild, KeyValuePair<ulong, Guild.UserScore> pair) => FromScore(guild, pair.Key, pair.Value);
+		public static ScoreData FromScore(SocketGuild guild, ulong userId, Guild.UserScore score)
+		{
+			return new ScoreData(-1, guild.GetUser(userId).GetFullUsername(), score.Elo, score.Wins, score.Losses, Math.Round(score.WinRate, 4).ToString("#.0000"));
+		}
+
+		public SpacingData GetDigitCounts()
+		{
+			return new SpacingData(this);
+		}
+	}
+	private struct SpacingData
+	{
+		public int Username { get; }
+		public int Elo { get; }
+		public int Wins { get; }
+		public int Losses { get; }
+		public int WinRate { get; }
+
+		public SpacingData(int username, int elo, int wins, int losses, int winRate)
+		{
+			Username = username;
+			Elo = elo;
+			Wins = wins;
+			Losses = losses;
+			WinRate = winRate;
+		}
+		public SpacingData(ScoreData data)
+		{
+			Username = data.Username.Length;
+			Elo = data.Elo.Length;
+			Wins = data.Wins.Length;
+			Losses = data.Losses.Length;
+			WinRate = data.WinRate.Length;
+		}
+
+		public SpacingData KeepMax(SpacingData other)
+		{
+			return new SpacingData(
+				Math.Max(this.Username, other.Username),
+				Math.Max(this.Elo, other.Elo),
+				Math.Max(this.Wins, other.Wins),
+				Math.Max(this.Losses, other.Losses),
+				Math.Max(this.WinRate, other.WinRate));
+		}
+		public int[] ToArray()
+		{
+			return new int[] { Username, Elo, Wins, Losses, WinRate };
+		}
 	}
 }
