@@ -19,17 +19,17 @@ public abstract class ModuleWithHelp : ModuleBase<SocketCommandContext>, IModule
 	public async Task HelpCommand()
 	{
 		ModuleInfo foundModule = Program.CommandHandler.Commands.Modules.Where(mod => mod.Name == ModuleName).FirstOrDefault();
-		string mainAlias = foundModule?.Aliases[0];
+		string mainAlias = foundModule.Aliases[0];
 		IEnumerable<string> aliases = foundModule?.Aliases.Select(cmdStr => cmdStr.Split(' ').Last()).Distinct();
 
-		List<EmbedFieldBuilder> fields = new List<EmbedFieldBuilder>
+		List<EmbedFieldBuilder> fields = new List<EmbedFieldBuilder>(2)
 		{
 			new EmbedFieldBuilder().WithName("Usage")
 								   .WithValue($"`{Program.Config.Settings.CommandPrefix}{mainAlias} {Usage}`")
 								   .WithIsInline(false)
 		};
 
-		if (aliases?.Count() > 1)
+		if (aliases.Count() > 1)
 		{
 			fields.Add(new EmbedFieldBuilder().WithName("Aliases")
 											  .WithValue(string.Join(", ", aliases.Where(str => str != mainAlias).Select(str => $"`{str}`")))
