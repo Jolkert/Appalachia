@@ -32,6 +32,8 @@ internal static class Program
 	{
 		Console.Title = $"{Name} v{Version}";
 		Logger = new Logger("Resources/logs", Config?.Settings.OutputLogsToFile ?? true);
+		_loggerDelegate = typeof(Logger).GetMethod("Log", BindingFlags.NonPublic | BindingFlags.Instance).CreateDelegate<Action<LogMessage>>(Logger);
+
 		AppalachiaConsole.InputPrefix = "> ";
 
 		try
@@ -63,7 +65,7 @@ internal static class Program
 		Logger.Debug("You are currently running a debug build of Appalachia. Bugs and errors may be present!");
 
 		Client = new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All });
-		CommandHandler = new CommandHandler(Client, new CommandService());
+		CommandHandler = new CommandHandler(Client, new CommandService(), LogAsync);
 
 		Client.Log += LogAsync;
 		Client.Ready += OnReadyAsync;
@@ -426,9 +428,10 @@ internal static class Program
 		return $"{user.Mention} chose {selection} ({selection.ToEmote()})";
 	}
 
-	internal static Task LogAsync(LogMessage message)
+	private static Action<LogMessage> _loggerDelegate;
+	private static Task LogAsync(LogMessage message)
 	{
-		Logger.Log(message);
+		_loggerDelegate(message);
 		return Task.CompletedTask;
 	}
 	public static void Stop()

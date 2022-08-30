@@ -72,7 +72,7 @@ public class Logger
 	}
 
 
-	public void Log(LogMessage message)
+	private void Log(LogMessage message)
 	{
 #if !DEBUG
 		if (message.Severity == LogSeverity.Debug)

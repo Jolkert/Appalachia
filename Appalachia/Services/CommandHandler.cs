@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ class CommandHandler
 	public CommandService Commands { get; }
 	private readonly DiscordSocketClient _client;
 
-	public CommandHandler(DiscordSocketClient client, CommandService commandService)
+	public CommandHandler(DiscordSocketClient client, CommandService commandService, Func<LogMessage, Task> logDelegate)
 	{
 		_client = client;
 		Commands = commandService;
@@ -23,7 +24,7 @@ class CommandHandler
 		_client.MessageReceived += MessageReceivedAsync;
 		Commands.CommandExecuted += CommandExecutedAsync;
 
-		Commands.Log += Program.LogAsync;
+		Commands.Log += logDelegate;
 	}
 
 	public async Task InitializeAsync()
