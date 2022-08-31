@@ -1,13 +1,11 @@
 ﻿using Appalachia.Data;
 using Appalachia.Extensions;
-using Appalachia.Services;
 using Appalachia.Utility;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -107,7 +105,7 @@ public class RockPaperScissorsModule : ModuleWithHelp
 		}
 		int rankSpacing = (leaderboard[^1].Rank / 10) + 1;
 
-		int stringSize = 6 + (rankSpacing + spacings.Username +  spacings.Elo + spacings.Wins + spacings.Losses + spacings.WinRate + 17) * (leaderboard.Length + (leaderboard[^1].Rank > 3 ? 1 : 0) + 2);
+		int stringSize = 6 + (rankSpacing + spacings.Username + spacings.Elo + spacings.Wins + spacings.Losses + spacings.WinRate + 17) * (leaderboard.Length + (leaderboard[^1].Rank > 3 ? 1 : 0) + 2);
 		// 6 for backticks; 17 breaks down to: 2/spacing except winrate (10) + 1 winrate spacing + 1/vertical bar (5) + 1 newline; rest should be pretty self-explanatory? I know it sucks -jolk 2022-08-26
 
 		string format = $"{{0, {-rankSpacing}}}. │ {{1, {-spacings.Username}}} | {{2, {spacings.Elo}}} │ {{3, {spacings.Wins}}} │ {{4, {spacings.Losses}}} │ {{5, {spacings.WinRate}}}";
